@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  /* Prevent text selection (feels more app-like) */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #45475a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #585b70; }
+
+/* ── Search input ────────────────────────────────────────────────────────────── */
+.search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  caret-color: #89b4fa;
+  color: #cdd6f4;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  width: 100%;
+}
+.search-input::placeholder { color: #585b70; }
+
+/* Allow text selection only in the search input */
+.search-input { user-select: text; -webkit-user-select: text; }
