@@ -1,11 +1,12 @@
-import { ipcMain, clipboard, BrowserWindow } from 'electron'
+import { ipcMain, clipboard, globalShortcut, BrowserWindow } from 'electron'
 import type { SalesforceService } from './salesforce'
 import type { Store } from './store'
 
 export function setupIPC(
   win: BrowserWindow,
   sf:  SalesforceService,
-  store: Store
+  store: Store,
+  onToggle: () => void
 ): void {
 
   // ── Orgs ────────────────────────────────────────────────────────────────────
@@ -58,6 +59,32 @@ export function setupIPC(
   ipcMain.handle('orgs:incrementUsage', (_, orgId: string) => {
     store.incrementUsage(orgId)
     return { success: true, data: undefined }
+  })
+
+  // ── Settings ─────────────────────────────────────────────────────────────────
+
+  ipcMain.handle('settings:getHotkey', () => {
+    return { success: true, data: store.getHotkey() }
+  })
+
+  ipcMain.handle('settings:setHotkey', (_, hotkey: string) => {
+    try {
+      globalShortcut.unregisterAll()
+      const ok = globalShortcut.register(hotkey, onToggle)
+      if (!ok) {
+        // Re-register old hotkey on failure
+        const prev = store.getHotkey()
+        globalShortcut.register(prev, onToggle)
+        return { success: false, error: `Could not register "${hotkey}". It may be in use by another application.` }
+      }
+      store.setHotkey(hotkey)
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
+      // Re-register old hotkey on error
+      const prev = store.getHotkey()
+      try { globalShortcut.register(prev, onToggle) } catch { /* best effort */ }
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
   })
 
   // ── Window ──────────────────────────────────────────────────────────────────

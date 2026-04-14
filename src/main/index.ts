@@ -104,14 +104,15 @@ app.whenReady().then(() => {
 
   mainWindow = createWindow()
 
-  setupIPC(mainWindow, sf, store)
+  setupIPC(mainWindow, sf, store, toggleWindow)
   setupTray(mainWindow, toggleWindow)
 
   // Warm-up: load orgs in the background so the first open is instant
   sf.listOrgs().catch(() => { /* surfaced to the renderer on demand */ })
 
-  // Global shortcut: Ctrl+Shift+S
-  globalShortcut.register('CommandOrControl+Shift+S', toggleWindow)
+  // Global shortcut: use stored hotkey (defaults to Ctrl+Shift+S)
+  const hotkey = store.getHotkey()
+  globalShortcut.register(hotkey, toggleWindow)
 })
 
 // Keep the app alive in the tray; don't quit when all windows are closed

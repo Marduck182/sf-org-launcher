@@ -22,6 +22,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   incrementUsage: (orgId: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('orgs:incrementUsage', orgId),
 
+  // ── Settings ─────────────────────────────────────────────────────────────────
+  getHotkey: (): Promise<IpcResponse<string>> =>
+    ipcRenderer.invoke('settings:getHotkey'),
+
+  setHotkey: (hotkey: string): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('settings:setHotkey', hotkey),
+
   // ── Window ──────────────────────────────────────────────────────────────────
   hideWindow: (): void => ipcRenderer.send('window:hide'),
 

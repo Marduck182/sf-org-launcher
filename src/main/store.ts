@@ -9,9 +9,12 @@ interface UsageEntry {
 
 interface StoreData {
   usage: Record<string, UsageEntry>
+  hotkey: string
 }
 
-const EMPTY: StoreData = { usage: {} }
+const DEFAULT_HOTKEY = 'CommandOrControl+Shift+S'
+
+const EMPTY: StoreData = { usage: {}, hotkey: DEFAULT_HOTKEY }
 
 export class Store {
   private filePath: string
@@ -49,6 +52,15 @@ export class Store {
     }
     this.data.usage[orgId].count++
     this.data.usage[orgId].lastUsed = Date.now()
+    this.save()
+  }
+
+  getHotkey(): string {
+    return this.data.hotkey || DEFAULT_HOTKEY
+  }
+
+  setHotkey(hotkey: string): void {
+    this.data.hotkey = hotkey
     this.save()
   }
 }
