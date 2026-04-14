@@ -206,7 +206,13 @@ export class SalesforceService {
     push(result.scratchOrgs,    'scratch')
     push(result.sandboxes,      'sandbox')
 
-    return orgs
+    // Deduplicate by orgId — the CLI can return the same org in multiple lists
+    const seen = new Set<string>()
+    return orgs.filter(o => {
+      if (seen.has(o.orgId)) return false
+      seen.add(o.orgId)
+      return true
+    })
   }
 
   private withUsage(orgs: SfOrg[]): SfOrg[] {

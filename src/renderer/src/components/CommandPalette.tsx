@@ -85,10 +85,10 @@ function filterOrgs(orgs: SfOrg[], q: string): SfOrg[] {
   if (!q.trim()) return orgs
   const lower = q.toLowerCase()
   return orgs.filter(o =>
-    o.alias.toLowerCase().includes(lower)       ||
-    o.username.toLowerCase().includes(lower)    ||
-    o.instanceUrl.toLowerCase().includes(lower) ||
-    o.orgId.toLowerCase().includes(lower)
+    (o.alias ?? '').toLowerCase().includes(lower)       ||
+    (o.username ?? '').toLowerCase().includes(lower)    ||
+    (o.instanceUrl ?? '').toLowerCase().includes(lower) ||
+    (o.orgId ?? '').toLowerCase().includes(lower)
   )
 }
 
@@ -333,7 +333,7 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
           <div className="flex flex-col gap-0.5 p-1.5">
             {visible.map((org, idx) => (
               <OrgItem
-                key={org.orgId}
+                key={`${org.orgId}-${org.username}`}
                 org={org}
                 isSelected={idx === selected}
                 isLoading={loadingOrgId === org.orgId}
