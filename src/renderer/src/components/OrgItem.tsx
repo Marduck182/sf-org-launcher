@@ -92,6 +92,37 @@ function IconCopy({ copying, copied }: { copying: boolean; copied: boolean }) {
   )
 }
 
+function IconTerminal({ copying, copied }: { copying: boolean; copied: boolean }) {
+  if (copying) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        className="animate-spin"
+      >
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+    )
+  }
+  if (copied) {
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        className="text-green"
+      >
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    )
+  }
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <polyline points="4 17 10 11 4 5"/>
+      <line x1="12" y1="19" x2="20" y2="19"/>
+    </svg>
+  )
+}
+
 function IconStar() {
   return (
     <svg width="10" height="10" viewBox="0 0 24 24"
@@ -106,21 +137,27 @@ function IconStar() {
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-  org:        SfOrg
-  isSelected: boolean
-  isLoading:  boolean
-  isOpened:   boolean
-  isCopying:  boolean
-  isCopied:   boolean
-  onOpen:     () => void
-  onCopyLink: () => void
-  onHover:    () => void
+  org:          SfOrg
+  isSelected:   boolean
+  isLoading:    boolean
+  isOpened:     boolean
+  isCopying:    boolean
+  isCopied:     boolean
+  isCopyingCmd: boolean
+  isCopiedCmd:  boolean
+  isRemoving:   boolean
+  onOpen:       () => void
+  onCopyLink:   () => void
+  onCopyCmd:    () => void
+  onRemove:     () => void
+  onHover:      () => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function OrgItem({
-  org, isSelected, isLoading, isOpened, isCopying, isCopied, onOpen, onCopyLink, onHover
+  org, isSelected, isLoading, isOpened, isCopying, isCopied,
+  isCopyingCmd, isCopiedCmd, isRemoving, onOpen, onCopyLink, onCopyCmd, onRemove, onHover
 }: Props) {
   const cfg = TYPE_CONFIG[org.orgType] ?? TYPE_CONFIG.unknown
 
@@ -187,6 +224,38 @@ export function OrgItem({
         transition-opacity duration-100
         ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
       `}>
+        {/* Remove org */}
+        <button
+          onClick={e => { e.stopPropagation(); onRemove() }}
+          title="Remove org (Ctrl+D)"
+          disabled={isRemoving}
+          className={`p-1.5 rounded-lg transition-colors disabled:cursor-not-allowed
+            text-overlay0 hover:text-red hover:bg-red/10
+            ${isRemoving ? 'animate-spin' : ''}`}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          </svg>
+        </button>
+
+        {/* Copy CLI command */}
+        <button
+          onClick={e => { e.stopPropagation(); onCopyCmd() }}
+          title="Copy CLI command (Ctrl+K)"
+          disabled={isCopyingCmd}
+          className={`p-1.5 rounded-lg transition-colors disabled:cursor-not-allowed
+            ${isCopiedCmd
+              ? 'text-green bg-green/10'
+              : isCopyingCmd
+                ? 'text-overlay0'
+                : 'text-overlay0 hover:text-text hover:bg-surface1'
+            }`}
+        >
+          <IconTerminal copying={isCopyingCmd} copied={isCopiedCmd} />
+        </button>
+
         {/* Copy link */}
         <button
           onClick={e => { e.stopPropagation(); onCopyLink() }}

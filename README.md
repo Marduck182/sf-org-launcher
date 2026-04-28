@@ -12,6 +12,9 @@ Acceso rápido a tus organizaciones de Salesforce desde la bandeja del sistema d
 - Filtra automáticamente las orgs desconectadas o expiradas.
 - Ordena por las más usadas.
 - Genera un link de acceso directo y lo copia al portapapeles.
+- Copia el comando CLI (`sf org open`) al portapapeles.
+- Agrega nuevas orgs vía OAuth directamente desde la app.
+- Elimina orgs de la lista local.
 - Vive en la bandeja del sistema — sin ventana en la barra de tareas.
 
 ---
@@ -21,9 +24,8 @@ Acceso rápido a tus organizaciones de Salesforce desde la bandeja del sistema d
 | Herramienta | Versión mínima |
 |---|---|
 | [Node.js](https://nodejs.org) | 18+ |
-| [Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) (`sf`) | cualquier versión reciente |
 
-> La app detecta automáticamente `sf` o `sfdx` en tu PATH.
+> **No se requiere Salesforce CLI instalado.** La app usa [`@salesforce/core`](https://github.com/forcedotcom/sfdx-core) directamente para leer las autenticaciones y generar URLs de login. Solo necesitas haberte autenticado al menos una vez (vía `sf org login web` o desde la propia app).
 
 ---
 
@@ -69,8 +71,23 @@ npm run dev
 | `↑` / `↓` | Mover selección |
 | `↵ Enter` | Abrir org en el navegador |
 | `Ctrl + L` | Copiar link de acceso al portapapeles |
+| `Ctrl + K` | Copiar comando CLI al portapapeles |
+| `Ctrl + D` | Eliminar org de la lista local |
 | `Ctrl + R` | Refrescar lista de orgs |
 | `Esc` | Cerrar la paleta |
+
+### Agregar una org
+
+1. Haz clic en el botón **`+`** en la barra de búsqueda.
+2. Elige el tipo de entorno: **Production / Developer** o **Sandbox**.
+3. Se abre tu navegador con la página de login de Salesforce.
+4. Inicia sesión normalmente.
+5. La org aparece automáticamente en la lista.
+
+### Eliminar una org
+
+- Haz hover sobre la org y haz clic en el ícono de papelera, o usa `Ctrl + D`.
+- Esto solo elimina la autenticación local — la org sigue existiendo en Salesforce.
 
 ### Menú del tray (clic derecho)
 
@@ -89,7 +106,7 @@ src/
 │
 ├── main/                     # Proceso principal (Node.js / Electron)
 │   ├── index.ts              # Bootstrap, ventana, shortcut global
-│   ├── salesforce.ts         # Integración con sf/sfdx CLI
+│   ├── salesforce.ts         # Integración con @salesforce/core (sin CLI)
 │   ├── store.ts              # Persistencia de uso por org (JSON)
 │   ├── tray.ts               # Ícono y menú de bandeja del sistema
 │   ├── ipc.ts                # Handlers de comunicación IPC
@@ -103,6 +120,7 @@ src/
         ├── App.tsx
         └── components/
             ├── CommandPalette.tsx   # Paleta principal de búsqueda
+            ├── HotkeyRecorder.tsx  # Configuración de atajo global
             └── OrgItem.tsx          # Fila de cada org
 ```
 
@@ -122,24 +140,36 @@ src/
 ## Cómo funciona
 
 ```
-sf org list --json
+@salesforce/core
       ↓
-  SalesforceService          — filtra inactivas/expiradas, ordena por uso
+  AuthInfo.listAllAuthorizations()  — lee ~/.sf/ auth files
       ↓
-  Store (userData/*.json)    — persistencia del conteo de uso
+  SalesforceService                 — filtra expiradas, ordena por uso
       ↓
-  IPC (contextBridge)        — canal seguro main ↔ renderer
+  Store (userData/*.json)           — persistencia del conteo de uso
       ↓
-  CommandPalette (React)     — búsqueda, navegación, acciones
+  IPC (contextBridge)               — canal seguro main ↔ renderer
+      ↓
+  CommandPalette (React)            — búsqueda, navegación, acciones
+```
+
+### OAuth login flow
+
+```
+Botón "+" → Elige entorno → WebOAuthServer (localhost) → Browser login
+      ↓
+  Salesforce redirige al servidor local con auth code
+      ↓
+  authorizeAndSave() → se guarda en ~/.sf/ → lista se refresca
 ```
 
 ---
 
-## Notas sobre el CLI
+## Notas
 
-- `sf org list` puede tardar **hasta 60 segundos** en ambientes con plugins de desarrollo instalados. La app espera pacientemente y muestra un indicador de carga.
-- Si el CLI emite advertencias antes del JSON (e.g. `» Warning: Could not find typescript`), la app las ignora y extrae el JSON correctamente.
-- Solo se muestran orgs con estado `Connected`. Las desconectadas y las scratch expiradas se filtran automáticamente.
+- La app lee directamente los archivos de autenticación de `~/.sf/` vía `@salesforce/core`, sin depender del CLI.
+- Las orgs con `isExpired === true` y las que tienen errores de autenticación se filtran automáticamente.
+- Para generar URLs de acceso, la app usa `Org.refreshAuth()` + front-door URL con el access token.
 
 ---
 
@@ -170,4 +200,5 @@ La app guarda el conteo de uso en:
 | UI | React 18 + TypeScript |
 | Bundler | electron-vite + Vite 5 |
 | Estilos | Tailwind CSS 3 (tema Catppuccin Mocha) |
+| Salesforce API | @salesforce/core |
 | Empaquetado | electron-builder |

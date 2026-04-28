@@ -56,9 +56,41 @@ export function setupIPC(
     }
   })
 
+  ipcMain.handle('orgs:copyCmd', (_, identifier: string) => {
+    try {
+      const cmd = sf.getOpenCommand(identifier)
+      clipboard.writeText(cmd)
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
+  })
+
   ipcMain.handle('orgs:incrementUsage', (_, orgId: string) => {
     store.incrementUsage(orgId)
     return { success: true, data: undefined }
+  })
+
+  ipcMain.handle('orgs:login', async (_, loginUrl: string) => {
+    try {
+      await sf.loginOrg(loginUrl)
+      const data = await sf.listOrgs(true)
+      win.webContents.send('orgs:refreshed', data)
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
+  })
+
+  ipcMain.handle('orgs:remove', async (_, username: string) => {
+    try {
+      await sf.removeOrg(username)
+      const data = await sf.listOrgs(true)
+      win.webContents.send('orgs:refreshed', data)
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
   })
 
   // ── Settings ─────────────────────────────────────────────────────────────────

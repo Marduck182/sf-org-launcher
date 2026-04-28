@@ -60,6 +60,16 @@ function IconSettings() {
   )
 }
 
+function IconPlus() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    >
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  )
+}
+
 // ── Key-hint chip ──────────────────────────────────────────────────────────────
 
 function KeyChip({ label }: { label: string }) {
@@ -117,7 +127,12 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
   const [openedOrgId,  setOpenedOrgId]  = useState<string | null>(null)
   const [copyingOrgId, setCopyingOrgId] = useState<string | null>(null)
   const [copiedOrgId,  setCopiedOrgId]  = useState<string | null>(null)
+  const [copyingCmdId, setCopyingCmdId] = useState<string | null>(null)
+  const [copiedCmdId,  setCopiedCmdId]  = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showLogin,    setShowLogin]    = useState(false)
+  const [isLoggingIn,  setIsLoggingIn]  = useState(false)
+  const [removingOrgId, setRemovingOrgId] = useState<string | null>(null)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef  = useRef<HTMLDivElement>(null)
@@ -212,6 +227,53 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
     }
   }, [showToast])
 
+  const copyCmd = useCallback(async (org: SfOrg) => {
+    setCopyingCmdId(org.orgId)
+    setCopiedCmdId(null)
+
+    try {
+      const res = await window.electronAPI.copyOrgCmd(org.alias || org.username)
+      if (!res.success) {
+        showToast('err', res.error)
+      } else {
+        setCopiedCmdId(org.orgId)
+        showToast('ok', 'CLI command copied to clipboard')
+        setTimeout(() => setCopiedCmdId(null), 2_500)
+      }
+    } finally {
+      setCopyingCmdId(null)
+    }
+  }, [showToast])
+
+  const loginOrg = useCallback(async (loginUrl: string) => {
+    setIsLoggingIn(true)
+    try {
+      const res = await window.electronAPI.loginOrg(loginUrl)
+      if (!res.success) {
+        showToast('err', res.error)
+      } else {
+        showToast('ok', 'Org added successfully')
+        setShowLogin(false)
+      }
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }, [showToast])
+
+  const removeOrg = useCallback(async (org: SfOrg) => {
+    setRemovingOrgId(org.orgId)
+    try {
+      const res = await window.electronAPI.removeOrg(org.username)
+      if (!res.success) {
+        showToast('err', res.error)
+      } else {
+        showToast('ok', `${org.alias} removed`)
+      }
+    } finally {
+      setRemovingOrgId(null)
+    }
+  }, [showToast])
+
   // ── Keyboard navigation ─────────────────────────────────────────────────────
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -234,6 +296,20 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
           if (visible[selected]) copyLink(visible[selected])
         }
         break
+      case 'k':
+      case 'K':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault()
+          if (visible[selected]) copyCmd(visible[selected])
+        }
+        break
+      case 'd':
+      case 'D':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault()
+          if (visible[selected]) removeOrg(visible[selected])
+        }
+        break
       case 'r':
       case 'R':
         if (e.ctrlKey || e.metaKey) {
@@ -245,7 +321,7 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
         window.electronAPI.hideWindow()
         break
     }
-  }, [visible, selected, openOrg, copyLink, onRefresh])
+  }, [visible, selected, openOrg, copyLink, copyCmd, removeOrg, onRefresh])
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -279,7 +355,15 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
           <IconRefresh spinning={isRefreshing} />
         </button>
         <button
-          onClick={() => setShowSettings(s => !s)}
+          onClick={() => { setShowLogin(s => !s); setShowSettings(false) }}
+          title="Add org"
+          className={`text-overlay0 hover:text-green transition-colors p-1 rounded
+            hover:bg-surface0 ${showLogin ? 'text-green bg-surface0' : ''}`}
+        >
+          <IconPlus />
+        </button>
+        <button
+          onClick={() => { setShowSettings(s => !s); setShowLogin(false) }}
           title="Settings"
           className={`text-overlay0 hover:text-blue transition-colors p-1 rounded
             hover:bg-surface0 ${showSettings ? 'text-blue bg-surface0' : ''}`}
@@ -294,6 +378,48 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
       {/* ── Settings view ─────────────────────────────────────────────────── */}
       {showSettings ? (
         <HotkeyRecorder onClose={() => setShowSettings(false)} />
+      ) : showLogin ? (
+        <div className="px-5 py-6 space-y-3">
+          <p className="text-text text-sm font-medium">Add Salesforce Org</p>
+          <p className="text-overlay0 text-xs leading-relaxed">
+            Choose the environment to log in. Your browser will open the Salesforce login page.
+          </p>
+          <div className="flex flex-col gap-2 pt-1">
+            <button
+              onClick={() => loginOrg('https://login.salesforce.com')}
+              disabled={isLoggingIn}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-surface1
+                bg-surface0/50 hover:bg-surface0 transition-colors text-left
+                disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="w-8 h-8 rounded-lg bg-blue/10 border border-blue/25
+                flex items-center justify-center text-blue text-[9px] font-bold">PROD</span>
+              <div>
+                <p className="text-text text-sm font-medium">Production / Developer</p>
+                <p className="text-overlay0 text-[11px]">login.salesforce.com</p>
+              </div>
+            </button>
+            <button
+              onClick={() => loginOrg('https://test.salesforce.com')}
+              disabled={isLoggingIn}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-surface1
+                bg-surface0/50 hover:bg-surface0 transition-colors text-left
+                disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="w-8 h-8 rounded-lg bg-yellow/10 border border-yellow/25
+                flex items-center justify-center text-yellow text-[9px] font-bold">SBX</span>
+              <div>
+                <p className="text-text text-sm font-medium">Sandbox</p>
+                <p className="text-overlay0 text-[11px]">test.salesforce.com</p>
+              </div>
+            </button>
+          </div>
+          {isLoggingIn && (
+            <p className="text-center text-overlay0 text-[11px] pt-2 animate-pulse">
+              Waiting for login in browser…
+            </p>
+          )}
+        </div>
       ) : (
       <>
       {/* ── List ──────────────────────────────────────────────────────────── */}
@@ -365,8 +491,13 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
                 isOpened={openedOrgId === org.orgId}
                 isCopying={copyingOrgId === org.orgId}
                 isCopied={copiedOrgId === org.orgId}
+                isCopyingCmd={copyingCmdId === org.orgId}
+                isCopiedCmd={copiedCmdId === org.orgId}
+                isRemoving={removingOrgId === org.orgId}
                 onOpen={() => openOrg(org)}
                 onCopyLink={() => copyLink(org)}
+                onCopyCmd={() => copyCmd(org)}
+                onRemove={() => removeOrg(org)}
                 onHover={() => setSelected(idx)}
               />
             ))}
@@ -382,6 +513,8 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
             <KeyHint keys={['↑', '↓']}        desc="Navigate" />
             <KeyHint keys={['↵']}              desc="Open" />
             <KeyHint keys={['Ctrl', 'L']}      desc="Copy link" />
+            <KeyHint keys={['Ctrl', 'K']}      desc="Copy cmd" />
+            <KeyHint keys={['Ctrl', 'D']}      desc="Remove" />
             <KeyHint keys={['Ctrl', 'R']}      desc="Refresh" />
             <KeyHint keys={['Esc']}            desc="Close" />
             <span className="ml-auto text-[11px] text-overlay0/50">

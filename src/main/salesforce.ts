@@ -1,172 +1,75 @@
-import { spawn } from 'child_process'
+import { AuthInfo, Org, StateAggregator, WebOAuthServer } from '@salesforce/core'
 import { shell } from 'electron'
 import type { SfOrg, OrgType } from '../shared/types'
 import type { Store } from './store'
 
-/**
- * Environment passed to every CLI call.
- * Suppresses the Node.js plugin-missing warnings that SF CLI dev-installs emit.
- */
-const CLI_ENV: NodeJS.ProcessEnv = {
-  ...process.env,
-  NODE_NO_WARNINGS: '1',
-  NODE_OPTIONS: '--no-warnings',
-}
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Run a shell command and return the combined stdout+stderr output,
- * regardless of the exit code.  Using spawn (not exec) so we always
- * receive output even when the process exits non-zero.
- */
-function runCmd(cmd: string, timeoutMs: number): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd, { shell: true, env: CLI_ENV })
-    let out = ''
-    let timer: ReturnType<typeof setTimeout>
-
-    child.stdout.on('data', (d: Buffer) => { out += d.toString() })
-    child.stderr.on('data', (d: Buffer) => { out += d.toString() })
-
-    child.on('close', () => {
-      clearTimeout(timer)
-      resolve(out)
-    })
-
-    child.on('error', (e) => {
-      clearTimeout(timer)
-      reject(e)
-    })
-
-    timer = setTimeout(() => {
-      child.kill()
-      reject(new Error(`CLI timed out after ${timeoutMs / 1_000}s`))
-    }, timeoutMs)
-  })
-}
-
-/**
- * SF CLI always emits {"status": N, "result": ...}.
- * We search for that exact prefix to skip any » warning lines or
- * Node.js error messages that happen to contain bare '{' characters.
- */
-function extractJson(raw: string): unknown {
-  // Primary: SF CLI JSON marker
-  for (const marker of ['{"status":', '{ "status":']) {
-    const idx = raw.indexOf(marker)
-    if (idx !== -1) {
-      return JSON.parse(raw.slice(idx))
-    }
-  }
-  // Fallback for sfdx which may use a slightly different root key
-  const fallback = raw.lastIndexOf('\n{')
-  if (fallback !== -1) return JSON.parse(raw.slice(fallback + 1))
-
-  throw new Error(
-    'Could not find JSON in CLI output.\n\n' +
-    'First 500 chars of output:\n' +
-    raw.slice(0, 500)
-  )
-}
-
-// ── Raw shapes returned by the CLI ───────────────────────────────────────────
-
-interface CliOrg {
-  alias?:                  string
-  username:                string
-  orgId:                   string
-  instanceUrl:             string
-  connectedStatus?:        string
-  isDefaultUsername?:      boolean
-  isDefaultDevHubUsername?:boolean
-  expirationDate?:         string
-}
-
-interface OrgListResult {
-  nonScratchOrgs?: CliOrg[]
-  scratchOrgs?:    CliOrg[]
-  sandboxes?:      CliOrg[]
-}
-
-// ── Business rules ────────────────────────────────────────────────────────────
-
-const ACTIVE_STATUSES = new Set(['Connected'])
-
-function isExpired(org: CliOrg): boolean {
-  if (!org.expirationDate) return false
-  return new Date(org.expirationDate) < new Date()
+function resolveOrgType(auth: { isDevHub?: boolean; isScratchOrg?: boolean; isSandbox?: boolean }): OrgType {
+  if (auth.isDevHub) return 'devhub'
+  if (auth.isScratchOrg) return 'scratch'
+  if (auth.isSandbox) return 'sandbox'
+  return 'production'
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
 
 export class SalesforceService {
-  private cached:      SfOrg[] | null = null
-  private cliCommand:  string  = 'sf'
-  private cliDetected: boolean = false
+  private cached: SfOrg[] | null = null
 
   constructor(private readonly store: Store) {}
-
-  // ── CLI detection (runs once per session) ─────────────────────────────────
-
-  private async detectCli(): Promise<void> {
-    if (this.cliDetected) return
-
-    for (const cmd of ['sf', 'sfdx']) {
-      try {
-        const out = await runCmd(`${cmd} --version`, 5_000)
-        if (out.trim()) {
-          this.cliCommand  = cmd
-          this.cliDetected = true
-          return
-        }
-      } catch {
-        // Try next
-      }
-    }
-    throw new Error(
-      'Salesforce CLI not found.\n' +
-      'Install it from https://developer.salesforce.com/tools/salesforcecli'
-    )
-  }
 
   // ── Public API ────────────────────────────────────────────────────────────
 
   async listOrgs(forceRefresh = false): Promise<SfOrg[]> {
     if (this.cached && !forceRefresh) return this.withUsage(this.cached)
 
-    await this.detectCli()
+    const auths = await AuthInfo.listAllAuthorizations()
+    const orgs: SfOrg[] = []
+    const seen = new Set<string>()
 
-    const cmd = this.cliCommand === 'sf'
-      ? 'sf org list --json'
-      : 'sfdx force:org:list --json'
+    for (const a of auths) {
+      if (!a.orgId || seen.has(a.orgId)) continue
+      if (a.error || a.isExpired === true) continue
+      seen.add(a.orgId)
 
-    const raw    = await runCmd(cmd, 60_000)
-    const parsed = extractJson(raw) as { result?: OrgListResult; status?: number }
-    const result = (parsed.result ?? parsed) as OrgListResult
+      // Try to read expiration date for scratch orgs
+      let expirationDate: string | undefined
+      if (a.isScratchOrg) {
+        try {
+          const info = await AuthInfo.create({ username: a.username })
+          expirationDate = info.getFields().expirationDate
+        } catch { /* best effort */ }
+      }
 
-    this.cached = this.parseOrgs(result)
+      orgs.push({
+        alias:                   a.aliases?.[0] ?? a.username,
+        username:                a.username,
+        orgId:                   a.orgId,
+        instanceUrl:             a.instanceUrl ?? '',
+        connectedStatus:         'Connected',
+        isDefaultUsername:        a.configs?.includes('target-org') ?? false,
+        isDefaultDevHubUsername:  a.configs?.includes('target-dev-hub') ?? false,
+        orgType:                 resolveOrgType(a),
+        expirationDate,
+        usageCount:              0,
+      })
+    }
+
+    this.cached = orgs
     return this.withUsage(this.cached)
   }
 
   async getLoginUrl(identifier: string): Promise<string> {
-    await this.detectCli()
+    const org = await Org.create({ aliasOrUsername: identifier })
+    await org.refreshAuth()
+    const conn = org.getConnection()
 
-    const cmd = this.cliCommand === 'sf'
-      ? `sf org open --target-org "${identifier}" --url-only --json`
-      : `sfdx force:org:open --targetusername "${identifier}" --urlonly --json`
-
-    const raw    = await runCmd(cmd, 12_000)
-    const parsed = extractJson(raw) as { status?: number; message?: string; result?: { url?: string } | string }
-
-    if (parsed.status !== 0 && parsed.message) {
-      throw new Error(parsed.message)
+    if (!conn.accessToken || !conn.instanceUrl) {
+      throw new Error('Could not generate login URL — authentication may have expired')
     }
 
-    const url = typeof parsed.result === 'string'
-      ? parsed.result
-      : parsed.result?.url
-
-    if (!url) throw new Error('CLI returned an empty URL')
-    return url
+    return `${conn.instanceUrl}/secur/frontdoor.jsp?sid=${encodeURIComponent(conn.accessToken)}`
   }
 
   async openOrg(identifier: string): Promise<void> {
@@ -174,46 +77,32 @@ export class SalesforceService {
     await shell.openExternal(url)
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  private parseOrgs(result: OrgListResult): SfOrg[] {
-    const orgs: SfOrg[] = []
-
-    const push = (list: CliOrg[] | undefined, type: OrgType) => {
-      for (const o of list ?? []) {
-        const status = o.connectedStatus ?? 'Unknown'
-        if (!ACTIVE_STATUSES.has(status)) continue
-        if (isExpired(o)) continue
-
-        const resolvedType: OrgType = o.isDefaultDevHubUsername ? 'devhub' : type
-
-        orgs.push({
-          alias:                   o.alias ?? o.username,
-          username:                o.username,
-          orgId:                   o.orgId,
-          instanceUrl:             o.instanceUrl ?? '',
-          connectedStatus:         status,
-          isDefaultUsername:       o.isDefaultUsername ?? false,
-          isDefaultDevHubUsername: o.isDefaultDevHubUsername ?? false,
-          orgType:                 resolvedType,
-          expirationDate:          o.expirationDate,
-          usageCount:              0,
-        })
-      }
-    }
-
-    push(result.nonScratchOrgs, 'production')
-    push(result.scratchOrgs,    'scratch')
-    push(result.sandboxes,      'sandbox')
-
-    // Deduplicate by orgId — the CLI can return the same org in multiple lists
-    const seen = new Set<string>()
-    return orgs.filter(o => {
-      if (seen.has(o.orgId)) return false
-      seen.add(o.orgId)
-      return true
-    })
+  getOpenCommand(identifier: string): string {
+    return `sf org open --target-org "${identifier}"`
   }
+
+  async loginOrg(loginUrl: string): Promise<void> {
+    const oauthServer = await WebOAuthServer.create({ oauthConfig: { loginUrl } })
+    await oauthServer.start()
+    const authUrl = oauthServer.getAuthorizationUrl()
+    await shell.openExternal(authUrl)
+    await oauthServer.authorizeAndSave()
+    this.cached = null
+  }
+
+  async removeOrg(username: string): Promise<void> {
+    const sa = await StateAggregator.getInstance()
+    // Remove aliases pointing to this username
+    const aliases = sa.aliases.getAll(username)
+    if (aliases.length > 0) {
+      await sa.aliases.unsetValuesAndSave(aliases)
+    }
+    // Remove the auth file
+    await sa.orgs.remove(username)
+    this.cached = null
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private withUsage(orgs: SfOrg[]): SfOrg[] {
     const usage = this.store.getUsage()

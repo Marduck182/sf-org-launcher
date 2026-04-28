@@ -19,8 +19,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   copyOrgLink: (identifier: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('orgs:copyLink', identifier),
 
+  copyOrgCmd: (identifier: string): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('orgs:copyCmd', identifier),
+
   incrementUsage: (orgId: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('orgs:incrementUsage', orgId),
+
+  loginOrg: (loginUrl: string): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('orgs:login', loginUrl),
+
+  removeOrg: (username: string): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('orgs:remove', username),
 
   // ── Settings ─────────────────────────────────────────────────────────────────
   getHotkey: (): Promise<IpcResponse<string>> =>
