@@ -15,6 +15,7 @@ Acceso rápido a tus organizaciones de Salesforce desde la bandeja del sistema d
 - Copia el comando CLI (`sf org open`) al portapapeles.
 - Agrega nuevas orgs vía OAuth directamente desde la app.
 - Elimina orgs de la lista local.
+- Exporta e importa datos de uso y configuración (backup o migración entre PCs).
 - Vive en la bandeja del sistema — sin ventana en la barra de tareas.
 
 ---
@@ -88,6 +89,15 @@ npm run dev
 
 - Haz hover sobre la org y haz clic en el ícono de papelera, o usa `Ctrl + D`.
 - Esto solo elimina la autenticación local — la org sigue existiendo en Salesforce.
+
+### Exportar / Importar datos
+
+1. Abre **Settings** (ícono de engranaje en la barra de búsqueda).
+2. En la sección **Data**, usa:
+   - **📤 Export** — guarda un archivo `.json` con tus estadísticas de uso y hotkey configurado.
+   - **📥 Import** — carga un archivo `.json` previamente exportado. Los datos se reemplazan y la lista se refresca automáticamente.
+
+> Útil para migrar entre máquinas o como backup.
 
 ### Menú del tray (clic derecho)
 

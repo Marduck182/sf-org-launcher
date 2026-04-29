@@ -63,4 +63,20 @@ export class Store {
     this.data.hotkey = hotkey
     this.save()
   }
+
+  exportData(): string {
+    return JSON.stringify(this.data, null, 2)
+  }
+
+  importData(raw: string): void {
+    const parsed = JSON.parse(raw) as StoreData
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.usage !== 'object') {
+      throw new Error('Invalid store file format')
+    }
+    this.data = {
+      usage: parsed.usage ?? {},
+      hotkey: parsed.hotkey || DEFAULT_HOTKEY
+    }
+    this.save()
+  }
 }

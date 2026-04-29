@@ -38,6 +38,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setHotkey: (hotkey: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('settings:setHotkey', hotkey),
 
+  // ── Export / Import ─────────────────────────────────────────────────────────
+  exportData: (): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('store:export'),
+
+  importData: (): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('store:import'),
+
   // ── Window ──────────────────────────────────────────────────────────────────
   hideWindow: (): void => ipcRenderer.send('window:hide'),
 

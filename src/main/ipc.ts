@@ -1,4 +1,5 @@
-import { ipcMain, clipboard, globalShortcut, BrowserWindow } from 'electron'
+import { ipcMain, clipboard, globalShortcut, BrowserWindow, dialog } from 'electron'
+import { readFileSync, writeFileSync } from 'fs'
 import type { SalesforceService } from './salesforce'
 import type { Store } from './store'
 
@@ -115,6 +116,42 @@ export function setupIPC(
       // Re-register old hotkey on error
       const prev = store.getHotkey()
       try { globalShortcut.register(prev, onToggle) } catch { /* best effort */ }
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
+  })
+
+  // ── Export / Import ─────────────────────────────────────────────────────────
+
+  ipcMain.handle('store:export', async () => {
+    try {
+      const { canceled, filePath } = await dialog.showSaveDialog(win, {
+        title: 'Export SF Org Launcher Data',
+        defaultPath: 'sf-org-launcher-backup.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }]
+      })
+      if (canceled || !filePath) return { success: false, error: 'Cancelled' }
+      writeFileSync(filePath, store.exportData(), 'utf-8')
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
+  })
+
+  ipcMain.handle('store:import', async () => {
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+        title: 'Import SF Org Launcher Data',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        properties: ['openFile']
+      })
+      if (canceled || !filePaths[0]) return { success: false, error: 'Cancelled' }
+      const raw = readFileSync(filePaths[0], 'utf-8')
+      store.importData(raw)
+      // Refresh orgs to reflect imported usage data
+      const data = await sf.listOrgs(true)
+      win.webContents.send('orgs:refreshed', data)
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
       return { success: false, error: String((e as Error).message ?? e) }
     }
   })

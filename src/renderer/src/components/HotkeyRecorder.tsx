@@ -41,6 +41,8 @@ export function HotkeyRecorder({ onClose }: Props) {
   const [combo, setCombo]       = useState('')
   const [saving, setSaving]     = useState(false)
   const [error, setError]       = useState('')
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
   const recorderRef = useRef<HTMLButtonElement>(null)
 
   // Load current hotkey
@@ -102,6 +104,29 @@ export function HotkeyRecorder({ onClose }: Props) {
       setError(res.error)
     }
   }, [combo, onClose])
+
+  const handleExport = useCallback(async () => {
+    setExporting(true)
+    setError('')
+    const res = await window.electronAPI.exportData()
+    setExporting(false)
+    if (!res.success && res.error !== 'Cancelled') setError(res.error)
+  }, [])
+
+  const handleImport = useCallback(async () => {
+    setImporting(true)
+    setError('')
+    const res = await window.electronAPI.importData()
+    setImporting(false)
+    if (res.success) {
+      // Reload current hotkey after import
+      const hk = await window.electronAPI.getHotkey()
+      if (hk.success) setCurrent(hk.data)
+      onClose()
+    } else if (res.error !== 'Cancelled') {
+      setError(res.error)
+    }
+  }, [onClose])
 
   return (
     <div className="animate-fade-in flex flex-col gap-4 p-5">
@@ -173,6 +198,38 @@ export function HotkeyRecorder({ onClose }: Props) {
         >
           {saving ? 'Saving…' : 'Save'}
         </button>
+      </div>
+
+      {/* ── Export / Import ──────────────────────────────────────────────── */}
+      <div className="h-px bg-surface0 mt-1" />
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-text text-sm font-semibold">Data</h2>
+        <p className="text-overlay0 text-[11px] leading-relaxed">
+          Export or import your usage stats and settings to transfer between machines or as a backup.
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex-1 px-3 py-2 rounded-lg text-xs font-medium
+              border border-surface1 bg-surface0/50 hover:bg-surface0
+              text-text transition-colors
+              disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {exporting ? 'Exporting…' : '📤 Export'}
+          </button>
+          <button
+            onClick={handleImport}
+            disabled={importing}
+            className="flex-1 px-3 py-2 rounded-lg text-xs font-medium
+              border border-surface1 bg-surface0/50 hover:bg-surface0
+              text-text transition-colors
+              disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {importing ? 'Importing…' : '📥 Import'}
+          </button>
+        </div>
       </div>
     </div>
   )

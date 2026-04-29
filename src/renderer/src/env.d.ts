@@ -16,6 +16,8 @@ declare global {
       removeOrg:      (username: string)            => Promise<IpcResponse<undefined>>
       getHotkey:      ()                          => Promise<IpcResponse<string>>
       setHotkey:      (hotkey: string)            => Promise<IpcResponse<undefined>>
+      exportData:     ()                          => Promise<IpcResponse<undefined>>
+      importData:     ()                          => Promise<IpcResponse<undefined>>
       hideWindow:     ()                          => void
       onWindowShow:   (cb: () => void)            => () => void
       onOrgsRefreshed:(cb: (orgs: SfOrg[]) => void) => () => void
