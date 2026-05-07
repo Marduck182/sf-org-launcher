@@ -70,12 +70,14 @@ function toggleWindow(): void {
     return
   }
 
-  // Position: horizontally centred, 20 % from the top
-  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize
+  // Position: centred on the display where the cursor is, 20 % from the top
+  const cursorPoint = screen.getCursorScreenPoint()
+  const activeDisplay = screen.getDisplayNearestPoint(cursorPoint)
+  const { x: dx, y: dy, width: sw, height: sh } = activeDisplay.workArea
   const [ww, wh] = mainWindow.getSize()
   mainWindow.setPosition(
-    Math.floor((sw - ww) / 2),
-    Math.floor(sh * 0.18)
+    Math.floor(dx + (sw - ww) / 2),
+    Math.floor(dy + sh * 0.18)
   )
 
   mainWindow.show()
