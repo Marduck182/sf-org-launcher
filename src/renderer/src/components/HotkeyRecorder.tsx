@@ -43,6 +43,7 @@ export function HotkeyRecorder({ onClose }: Props) {
   const [error, setError]       = useState('')
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [iconStatus, setIconStatus] = useState<'idle' | 'setting' | 'done'>('idle')
   const recorderRef = useRef<HTMLButtonElement>(null)
 
   // Load current hotkey
@@ -127,6 +128,23 @@ export function HotkeyRecorder({ onClose }: Props) {
       setError(res.error)
     }
   }, [onClose])
+
+  const handleSetIcon = useCallback(async () => {
+    setIconStatus('setting')
+    const res = await window.electronAPI.setTrayIcon()
+    if (res.success) {
+      setIconStatus('done')
+      setTimeout(() => setIconStatus('idle'), 2000)
+    } else {
+      setIconStatus('idle')
+      if (res.error !== 'Cancelled') setError(res.error)
+    }
+  }, [])
+
+  const handleResetIcon = useCallback(async () => {
+    await window.electronAPI.resetTrayIcon()
+    setIconStatus('idle')
+  }, [])
 
   return (
     <div className="animate-fade-in flex flex-col gap-4 p-5">
@@ -228,6 +246,36 @@ export function HotkeyRecorder({ onClose }: Props) {
               disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {importing ? 'Importing…' : '📥 Import'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Tray Icon ──────────────────────────────────────────────────── */}
+      <div className="h-px bg-surface0 mt-1" />
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-text text-sm font-semibold">Tray Icon</h2>
+        <p className="text-overlay0 text-[11px] leading-relaxed">
+          Choose a custom image (PNG, ICO, JPG) for the system tray icon.
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSetIcon}
+            disabled={iconStatus === 'setting'}
+            className="flex-1 px-3 py-2 rounded-lg text-xs font-medium
+              border border-surface1 bg-surface0/50 hover:bg-surface0
+              text-text transition-colors
+              disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {iconStatus === 'setting' ? 'Selecting…' : iconStatus === 'done' ? '✓ Icon set' : '🎨 Change Icon'}
+          </button>
+          <button
+            onClick={handleResetIcon}
+            className="flex-1 px-3 py-2 rounded-lg text-xs font-medium
+              border border-surface1 bg-surface0/50 hover:bg-surface0
+              text-text transition-colors"
+          >
+            ↺ Reset Default
           </button>
         </div>
       </div>

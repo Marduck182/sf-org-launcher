@@ -16,6 +16,8 @@ declare global {
       renameOrg:      (username: string, newAlias: string) => Promise<IpcResponse<undefined>>
       getHotkey:      ()                          => Promise<IpcResponse<string>>
       setHotkey:      (hotkey: string)            => Promise<IpcResponse<undefined>>
+      setTrayIcon:    ()                          => Promise<IpcResponse<string>>
+      resetTrayIcon:  ()                          => Promise<IpcResponse<undefined>>
       exportData:     ()                          => Promise<IpcResponse<undefined>>
       importData:     ()                          => Promise<IpcResponse<undefined>>
       hideWindow:     ()                          => void

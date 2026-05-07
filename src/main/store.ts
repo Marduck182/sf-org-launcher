@@ -10,6 +10,7 @@ interface UsageEntry {
 interface StoreData {
   usage: Record<string, UsageEntry>
   hotkey: string
+  trayIconPath?: string
 }
 
 const DEFAULT_HOTKEY = 'CommandOrControl+Shift+S'
@@ -64,6 +65,15 @@ export class Store {
     this.save()
   }
 
+  getTrayIconPath(): string | undefined {
+    return this.data.trayIconPath
+  }
+
+  setTrayIconPath(iconPath: string | undefined): void {
+    this.data.trayIconPath = iconPath
+    this.save()
+  }
+
   exportData(): string {
     return JSON.stringify(this.data, null, 2)
   }
@@ -75,7 +85,8 @@ export class Store {
     }
     this.data = {
       usage: parsed.usage ?? {},
-      hotkey: parsed.hotkey || DEFAULT_HOTKEY
+      hotkey: parsed.hotkey || DEFAULT_HOTKEY,
+      trayIconPath: parsed.trayIconPath
     }
     this.save()
   }

@@ -107,7 +107,7 @@ app.whenReady().then(() => {
   mainWindow = createWindow()
 
   setupIPC(mainWindow, sf, store, toggleWindow)
-  setupTray(mainWindow, toggleWindow)
+  setupTray(mainWindow, toggleWindow, store)
 
   // Warm-up: load orgs in the background so the first open is instant
   sf.listOrgs().catch(() => { /* surfaced to the renderer on demand */ })

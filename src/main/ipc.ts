@@ -1,7 +1,9 @@
-import { ipcMain, clipboard, globalShortcut, BrowserWindow, dialog } from 'electron'
-import { readFileSync, writeFileSync } from 'fs'
+import { ipcMain, clipboard, globalShortcut, BrowserWindow, dialog, app } from 'electron'
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'fs'
+import { join, extname } from 'path'
 import type { SalesforceService } from './salesforce'
 import type { Store } from './store'
+import { updateTrayIcon } from './tray'
 
 export function setupIPC(
   win: BrowserWindow,
@@ -158,6 +160,35 @@ export function setupIPC(
   })
 
   // ── Window ──────────────────────────────────────────────────────────────────
+
+  ipcMain.handle('settings:setTrayIcon', async () => {
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+        title: 'Select Tray Icon',
+        filters: [{ name: 'Images', extensions: ['png', 'ico', 'jpg', 'jpeg'] }],
+        properties: ['openFile']
+      })
+      if (canceled || !filePaths[0]) return { success: false, error: 'Cancelled' }
+
+      // Copy to userData so it persists
+      const iconsDir = join(app.getPath('userData'), 'icons')
+      mkdirSync(iconsDir, { recursive: true })
+      const dest = join(iconsDir, `tray-icon${extname(filePaths[0])}`)
+      copyFileSync(filePaths[0], dest)
+
+      store.setTrayIconPath(dest)
+      updateTrayIcon(store)
+      return { success: true, data: dest }
+    } catch (e: unknown) {
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
+  })
+
+  ipcMain.handle('settings:resetTrayIcon', () => {
+    store.setTrayIconPath(undefined)
+    updateTrayIcon(store)
+    return { success: true, data: undefined }
+  })
 
   ipcMain.on('window:hide', () => win.hide())
 }

@@ -37,7 +37,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   setHotkey: (hotkey: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('settings:setHotkey', hotkey),
+  setTrayIcon: (): Promise<IpcResponse<string>> =>
+    ipcRenderer.invoke('settings:setTrayIcon'),
 
+  resetTrayIcon: (): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('settings:resetTrayIcon'),
   // ── Export / Import ─────────────────────────────────────────────────────────
   exportData: (): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('store:export'),
