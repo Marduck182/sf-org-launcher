@@ -127,8 +127,6 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
   const [openedOrgId,  setOpenedOrgId]  = useState<string | null>(null)
   const [copyingOrgId, setCopyingOrgId] = useState<string | null>(null)
   const [copiedOrgId,  setCopiedOrgId]  = useState<string | null>(null)
-  const [copyingCmdId, setCopyingCmdId] = useState<string | null>(null)
-  const [copiedCmdId,  setCopiedCmdId]  = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showLogin,    setShowLogin]    = useState(false)
   const [isLoggingIn,  setIsLoggingIn]  = useState(false)
@@ -227,24 +225,6 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
     }
   }, [showToast])
 
-  const copyCmd = useCallback(async (org: SfOrg) => {
-    setCopyingCmdId(org.orgId)
-    setCopiedCmdId(null)
-
-    try {
-      const res = await window.electronAPI.copyOrgCmd(org.alias || org.username)
-      if (!res.success) {
-        showToast('err', res.error)
-      } else {
-        setCopiedCmdId(org.orgId)
-        showToast('ok', 'CLI command copied to clipboard')
-        setTimeout(() => setCopiedCmdId(null), 2_500)
-      }
-    } finally {
-      setCopyingCmdId(null)
-    }
-  }, [showToast])
-
   const loginOrg = useCallback(async (loginUrl: string) => {
     setIsLoggingIn(true)
     try {
@@ -296,13 +276,6 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
           if (visible[selected]) copyLink(visible[selected])
         }
         break
-      case 'k':
-      case 'K':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault()
-          if (visible[selected]) copyCmd(visible[selected])
-        }
-        break
       case 'd':
       case 'D':
         if (e.ctrlKey || e.metaKey) {
@@ -321,7 +294,7 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
         window.electronAPI.hideWindow()
         break
     }
-  }, [visible, selected, openOrg, copyLink, copyCmd, removeOrg, onRefresh])
+  }, [visible, selected, openOrg, copyLink, removeOrg, onRefresh])
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -491,12 +464,9 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
                 isOpened={openedOrgId === org.orgId}
                 isCopying={copyingOrgId === org.orgId}
                 isCopied={copiedOrgId === org.orgId}
-                isCopyingCmd={copyingCmdId === org.orgId}
-                isCopiedCmd={copiedCmdId === org.orgId}
                 isRemoving={removingOrgId === org.orgId}
                 onOpen={() => openOrg(org)}
                 onCopyLink={() => copyLink(org)}
-                onCopyCmd={() => copyCmd(org)}
                 onRemove={() => removeOrg(org)}
                 onHover={() => setSelected(idx)}
               />
@@ -513,7 +483,6 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
             <KeyHint keys={['↑', '↓']}        desc="Navigate" />
             <KeyHint keys={['↵']}              desc="Open" />
             <KeyHint keys={['Ctrl', 'L']}      desc="Copy link" />
-            <KeyHint keys={['Ctrl', 'K']}      desc="Copy cmd" />
             <KeyHint keys={['Ctrl', 'D']}      desc="Remove" />
             <KeyHint keys={['Ctrl', 'R']}      desc="Refresh" />
             <KeyHint keys={['Esc']}            desc="Close" />

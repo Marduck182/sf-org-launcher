@@ -77,10 +77,6 @@ export class SalesforceService {
     await shell.openExternal(url)
   }
 
-  getOpenCommand(identifier: string): string {
-    return `sf org open --target-org "${identifier}"`
-  }
-
   async loginOrg(loginUrl: string): Promise<void> {
     const oauthServer = await WebOAuthServer.create({ oauthConfig: { loginUrl } })
     await oauthServer.start()

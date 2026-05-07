@@ -57,16 +57,6 @@ export function setupIPC(
     }
   })
 
-  ipcMain.handle('orgs:copyCmd', (_, identifier: string) => {
-    try {
-      const cmd = sf.getOpenCommand(identifier)
-      clipboard.writeText(cmd)
-      return { success: true, data: undefined }
-    } catch (e: unknown) {
-      return { success: false, error: String((e as Error).message ?? e) }
-    }
-  })
-
   ipcMain.handle('orgs:incrementUsage', (_, orgId: string) => {
     store.incrementUsage(orgId)
     return { success: true, data: undefined }

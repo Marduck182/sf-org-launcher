@@ -10,7 +10,6 @@ declare global {
       openOrg:        (identifier: string)        => Promise<IpcResponse<undefined>>
       getOrgLink:     (identifier: string)        => Promise<IpcResponse<string>>
       copyOrgLink:    (identifier: string)        => Promise<IpcResponse<undefined>>
-      copyOrgCmd:     (identifier: string)        => Promise<IpcResponse<undefined>>
       incrementUsage: (orgId: string)             => Promise<IpcResponse<undefined>>
       loginOrg:       (loginUrl: string)            => Promise<IpcResponse<undefined>>
       removeOrg:      (username: string)            => Promise<IpcResponse<undefined>>

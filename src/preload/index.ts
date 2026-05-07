@@ -19,9 +19,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   copyOrgLink: (identifier: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('orgs:copyLink', identifier),
 
-  copyOrgCmd: (identifier: string): Promise<IpcResponse<undefined>> =>
-    ipcRenderer.invoke('orgs:copyCmd', identifier),
-
   incrementUsage: (orgId: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('orgs:incrementUsage', orgId),
 
