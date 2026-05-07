@@ -84,6 +84,17 @@ export function setupIPC(
     }
   })
 
+  ipcMain.handle('orgs:rename', async (_, username: string, newAlias: string) => {
+    try {
+      await sf.renameOrg(username, newAlias)
+      const data = await sf.listOrgs(true)
+      win.webContents.send('orgs:refreshed', data)
+      return { success: true, data: undefined }
+    } catch (e: unknown) {
+      return { success: false, error: String((e as Error).message ?? e) }
+    }
+  })
+
   // ── Settings ─────────────────────────────────────────────────────────────────
 
   ipcMain.handle('settings:getHotkey', () => {

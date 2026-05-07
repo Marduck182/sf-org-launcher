@@ -113,9 +113,15 @@ interface Props {
   isCopying:    boolean
   isCopied:     boolean
   isRemoving:   boolean
+  isEditing:    boolean
+  editValue:    string
   onOpen:       () => void
   onCopyLink:   () => void
   onRemove:     () => void
+  onRenameStart:() => void
+  onRenameChange:(v: string) => void
+  onRenameSubmit:() => void
+  onRenameCancel:() => void
   onHover:      () => void
 }
 
@@ -123,7 +129,8 @@ interface Props {
 
 export function OrgItem({
   org, isSelected, isLoading, isOpened, isCopying, isCopied,
-  isRemoving, onOpen, onCopyLink, onRemove, onHover
+  isRemoving, isEditing, editValue,
+  onOpen, onCopyLink, onRemove, onRenameStart, onRenameChange, onRenameSubmit, onRenameCancel, onHover
 }: Props) {
   const cfg = TYPE_CONFIG[org.orgType] ?? TYPE_CONFIG.unknown
 
@@ -151,9 +158,26 @@ export function OrgItem({
       <div className="flex-1 min-w-0">
         {/* Row 1: alias + badges */}
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-text text-sm font-medium truncate leading-snug">
-            {org.alias}
-          </span>
+          {isEditing ? (
+            <input
+              autoFocus
+              className="text-text text-sm font-medium leading-snug bg-surface0 border border-blue/50
+                rounded px-1.5 py-0.5 outline-none focus:border-blue w-full min-w-0"
+              value={editValue}
+              onChange={e => onRenameChange(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') onRenameSubmit()
+                if (e.key === 'Escape') onRenameCancel()
+                e.stopPropagation()
+              }}
+              onBlur={onRenameSubmit}
+              onClick={e => e.stopPropagation()}
+            />
+          ) : (
+            <span className="text-text text-sm font-medium truncate leading-snug">
+              {org.alias}
+            </span>
+          )}
 
           {org.isDefaultUsername && (
             <span className="shrink-0 flex items-center gap-0.5 text-[9px] font-semibold
@@ -203,6 +227,19 @@ export function OrgItem({
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+          </svg>
+        </button>
+
+        {/* Rename org */}
+        <button
+          onClick={e => { e.stopPropagation(); onRenameStart() }}
+          title="Rename org (Ctrl+E)"
+          className="p-1.5 rounded-lg transition-colors text-overlay0 hover:text-text hover:bg-surface1"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+            <path d="m15 5 4 4"/>
           </svg>
         </button>
 

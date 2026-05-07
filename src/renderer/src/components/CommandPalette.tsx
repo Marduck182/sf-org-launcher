@@ -127,6 +127,8 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
   const [openedOrgId,  setOpenedOrgId]  = useState<string | null>(null)
   const [copyingOrgId, setCopyingOrgId] = useState<string | null>(null)
   const [copiedOrgId,  setCopiedOrgId]  = useState<string | null>(null)
+  const [editingOrgId, setEditingOrgId] = useState<string | null>(null)
+  const [editValue,    setEditValue]    = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [showLogin,    setShowLogin]    = useState(false)
   const [isLoggingIn,  setIsLoggingIn]  = useState(false)
@@ -254,6 +256,34 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
     }
   }, [showToast])
 
+  const renameStart = useCallback((org: SfOrg) => {
+    setEditingOrgId(org.orgId)
+    setEditValue(org.alias)
+  }, [])
+
+  const renameSubmit = useCallback(async () => {
+    if (!editingOrgId) return
+    const org = orgs.find(o => o.orgId === editingOrgId)
+    if (!org || !editValue.trim() || editValue.trim() === org.alias) {
+      setEditingOrgId(null)
+      return
+    }
+    try {
+      const res = await window.electronAPI.renameOrg(org.username, editValue.trim())
+      if (!res.success) {
+        showToast('err', res.error)
+      } else {
+        showToast('ok', `Renamed to ${editValue.trim()}`)
+      }
+    } finally {
+      setEditingOrgId(null)
+    }
+  }, [editingOrgId, editValue, orgs, showToast])
+
+  const renameCancel = useCallback(() => {
+    setEditingOrgId(null)
+  }, [])
+
   // ── Keyboard navigation ─────────────────────────────────────────────────────
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -283,6 +313,13 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
           if (visible[selected]) removeOrg(visible[selected])
         }
         break
+      case 'e':
+      case 'E':
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault()
+          if (visible[selected]) renameStart(visible[selected])
+        }
+        break
       case 'r':
       case 'R':
         if (e.ctrlKey || e.metaKey) {
@@ -294,7 +331,7 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
         window.electronAPI.hideWindow()
         break
     }
-  }, [visible, selected, openOrg, copyLink, removeOrg, onRefresh])
+  }, [visible, selected, openOrg, copyLink, removeOrg, renameStart, onRefresh])
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -465,9 +502,15 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
                 isCopying={copyingOrgId === org.orgId}
                 isCopied={copiedOrgId === org.orgId}
                 isRemoving={removingOrgId === org.orgId}
+                isEditing={editingOrgId === org.orgId}
+                editValue={editingOrgId === org.orgId ? editValue : ''}
                 onOpen={() => openOrg(org)}
                 onCopyLink={() => copyLink(org)}
                 onRemove={() => removeOrg(org)}
+                onRenameStart={() => renameStart(org)}
+                onRenameChange={setEditValue}
+                onRenameSubmit={renameSubmit}
+                onRenameCancel={renameCancel}
                 onHover={() => setSelected(idx)}
               />
             ))}
@@ -484,6 +527,7 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
             <KeyHint keys={['↵']}              desc="Open" />
             <KeyHint keys={['Ctrl', 'L']}      desc="Copy link" />
             <KeyHint keys={['Ctrl', 'D']}      desc="Remove" />
+            <KeyHint keys={['Ctrl', 'E']}      desc="Rename" />
             <KeyHint keys={['Ctrl', 'R']}      desc="Refresh" />
             <KeyHint keys={['Esc']}            desc="Close" />
             <span className="ml-auto text-[11px] text-overlay0/50">

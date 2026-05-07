@@ -98,6 +98,18 @@ export class SalesforceService {
     this.cached = null
   }
 
+  async renameOrg(username: string, newAlias: string): Promise<void> {
+    const sa = await StateAggregator.getInstance()
+    // Remove existing aliases for this username
+    const oldAliases = sa.aliases.getAll(username)
+    for (const old of oldAliases) {
+      await sa.aliases.unsetAndSave(old)
+    }
+    // Set the new alias
+    await sa.aliases.setAndSave(newAlias, username)
+    this.cached = null
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   private withUsage(orgs: SfOrg[]): SfOrg[] {

@@ -13,6 +13,7 @@ declare global {
       incrementUsage: (orgId: string)             => Promise<IpcResponse<undefined>>
       loginOrg:       (loginUrl: string)            => Promise<IpcResponse<undefined>>
       removeOrg:      (username: string)            => Promise<IpcResponse<undefined>>
+      renameOrg:      (username: string, newAlias: string) => Promise<IpcResponse<undefined>>
       getHotkey:      ()                          => Promise<IpcResponse<string>>
       setHotkey:      (hotkey: string)            => Promise<IpcResponse<undefined>>
       exportData:     ()                          => Promise<IpcResponse<undefined>>

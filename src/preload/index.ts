@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeOrg: (username: string): Promise<IpcResponse<undefined>> =>
     ipcRenderer.invoke('orgs:remove', username),
 
+  renameOrg: (username: string, newAlias: string): Promise<IpcResponse<undefined>> =>
+    ipcRenderer.invoke('orgs:rename', username, newAlias),
+
   // ── Settings ─────────────────────────────────────────────────────────────────
   getHotkey: (): Promise<IpcResponse<string>> =>
     ipcRenderer.invoke('settings:getHotkey'),
