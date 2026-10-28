@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--glass:rgba(30,30,30,.74);--edge:rgba(255,255,255,.16);--ink:#F4F5F0;--ink-2:rgba(244,245,240,.8);--lime:#D4FF3A;--prod:#FF5A4E;--sbx:#7FD4FF;--hub:#C9A7FF;--scr:#FFC857}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:620px;height:520px;overflow:hidden}
+body{position:relative;font-family:"Hanken Grotesk",system-ui,sans-serif;color:var(--ink);font-variant-numeric:tabular-nums;
+  background:radial-gradient(60% 70% at 15% 20%,#2F6BFF 0,transparent 60%),radial-gradient(50% 60% at 90% 80%,#FF7A3D 0,transparent 60%),#20262F}
+.win{position:absolute;border-radius:8px;background:#1E1E1E;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.win i{display:block;height:6px;margin:10px 14px;border-radius:3px;background:#3A6FD8}
+.win i:nth-child(2n){width:60%;background:#CE9178}.win i:nth-child(3n){width:40%;background:#6A9955}
+.panel{position:absolute;inset:0;border-radius:14px;background:var(--glass);backdrop-filter:blur(28px) saturate(150%);
+  border:1px solid var(--edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.18);display:flex;flex-direction:column;overflow:hidden}
+.panel::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
+  background-image:radial-gradient(rgba(255,255,255,.55) .6px,transparent .8px);background-size:4px 4px;
+  -webkit-mask:linear-gradient(180deg,#000 0,transparent 42%);mask:linear-gradient(180deg,#000 0,transparent 42%)}
+.bar{position:relative;display:flex;align-items:center;gap:10px;height:48px;padding:0 14px 0 18px}
+.q{flex:1;font:500 15px "Hanken Grotesk";color:var(--ink-2)}
+.q b{color:var(--ink);font-weight:600}.q i{display:inline-block;width:2px;height:16px;background:var(--lime);vertical-align:-3px}
+.ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--ink-2);background:rgba(255,255,255,.06)}
+.spec{position:relative;padding:4px 18px 14px;border-bottom:1px solid var(--edge)}
+.spec h1{font:400 50px/1 Silkscreen;letter-spacing:-.01em;color:var(--ink);white-space:nowrap;image-rendering:pixelated}
+.spec h1 em{font-style:normal;color:var(--sbx)}
+.spec .sub{display:flex;gap:14px;margin-top:10px;font:500 13px "Hanken Grotesk";color:var(--ink-2)}
+.spec .sub b{font:700 11px Silkscreen;letter-spacing:.04em;color:#0E1014;background:var(--sbx);padding:3px 6px 2px}
+.spec .go{position:absolute;right:18px;bottom:14px;display:flex;gap:6px}
+.k{height:26px;padding:0 10px;border-radius:7px;display:inline-flex;align-items:center;font:600 12px "Hanken Grotesk";background:rgba(255,255,255,.1);color:var(--ink)}
+.k.p{background:var(--lime);color:#0E1014}
+.list{position:relative;flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.r{display:grid;grid-template-columns:22px 1fr auto auto;align-items:center;gap:12px;height:40px;padding:0 10px;border-radius:9px;color:var(--ink-2)}
+.r .n{font:400 13px Silkscreen;color:rgba(244,245,240,.78)}
+.r .a{font:600 15px "Hanken Grotesk";color:var(--ink)}
+.r .t{font:700 10px Silkscreen;letter-spacing:.04em;padding:2px 5px 1px;border:1px solid currentColor}
+.r .u{font:500 12px "Hanken Grotesk";width:34px;text-align:right}
+.r.sel{background:rgba(212,255,58,.12);box-shadow:inset 0 0 0 1px rgba(212,255,58,.5)}
+.sb{color:var(--sbx)}.pr{color:var(--prod)}.hb{color:var(--hub)}.sc{color:var(--scr)}
+.foot{position:relative;height:36px;display:flex;align-items:center;gap:14px;padding:0 18px;border-top:1px solid var(--edge);font:500 12px "Hanken Grotesk";color:var(--ink-2)}
+.foot kbd{font:400 10px Silkscreen;padding:2px 5px;border-radius:4px;background:rgba(255,255,255,.1);color:var(--ink);margin-right:4px}
+.foot .n{margin-left:auto}
+</style></head><body>
+<div class="win" style="left:-30px;top:40px;width:380px;height:300px"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="win" style="left:330px;top:250px;width:340px;height:260px;background:#F5F5F5"><i style="background:#0B5CAB"></i><i style="background:#ccc"></i><i style="background:#ccc"></i></div>
+<div class="panel">
+  <div class="bar">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:rgba(244,245,240,.72)"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <div class="q"><b>acme</b><i></i></div>
+    <div class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></div>
+    <div class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+    <div class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></div>
+  </div>
+  <div class="spec">
+    <h1>ACME&nbsp;<em>UAT</em></h1>
+    <div class="sub"><b>SANDBOX</b><span>dev.team@acme-retail.com.uat</span><span>×48</span></div>
+    <div class="go"><span class="k p">↵ Open</span><span class="k">Ctrl L Link</span></div>
+  </div>
+  <div class="list">
+    <div class="r sel"><span class="n">1</span><span class="a">Acme Retail · UAT</span><span class="t sb">SBX</span><span class="u">×48</span></div>
+    <div class="r"><span class="n">2</span><span class="a">Acme Retail · Fix</span><span class="t sb">SBX</span><span class="u">×31</span></div>
+    <div class="r"><span class="n">3</span><span class="a">Acme Retail · Production</span><span class="t pr">PROD</span><span class="u">×12</span></div>
+    <div class="r"><span class="n">4</span><span class="a">Acme Dev Hub</span><span class="t hb">HUB</span><span class="u">×9</span></div>
+    <div class="r"><span class="n">5</span><span class="a">Acme Feature Scratch · exp Nov 4</span><span class="t sc">SCR</span><span class="u">×3</span></div>
+    <div class="r"><span class="n">6</span><span class="a">Northwind Logistics · QA</span><span class="t sb">SBX</span><span class="u">×2</span></div>
+  </div>
+  <div class="foot"><span><kbd>↑↓</kbd>Move</span><span><kbd>↵</kbd>Open</span><span><kbd>^1-9</kbd>Jump</span><span><kbd>^E</kbd>Rename</span><span class="n">6 orgs · synthetic data</span></div>
+</div>
+</body></html>

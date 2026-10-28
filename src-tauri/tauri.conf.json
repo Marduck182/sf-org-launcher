@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SF Org Launcher",
+  "version": "1.0.0",
+  "identifier": "com.sfOrg.launcher",
+  "build": {
+    "beforeDevCommand": "npx vite",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npx vite build",
+    "frontendDist": "../out/renderer"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "SF Org Launcher",
+        "width": 620,
+        "height": 520,
+        "visible": false,
+        "decorations": false,
+        "transparent": true,
+        "theme": "Dark",
+        "shadow": true,
+        "windowEffects": {
+          "effects": ["acrylic"]
+        },
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

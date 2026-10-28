@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-28T00:00:00Z",
+  "title": "Design System: SF Org Launcher",
+  "extensions": {
+    "colorMeta": {
+      "glass":           { "role": "neutral",   "displayName": "Smoked Glass",       "canonical": "rgba(30, 30, 30, 0.74)", "tonalRamp": ["#0B0B0B", "#141414", "#1E1E1E", "#2A2A2A", "#3C3C3C", "#5A5A5A", "#8A8A8A", "#C8C8C8"] },
+      "glass-solid":     { "role": "neutral",   "displayName": "VS Code Black",      "canonical": "#1E1E1E", "tonalRamp": ["#0B0B0B", "#141414", "#1E1E1E", "#2A2A2A", "#3C3C3C", "#5A5A5A", "#8A8A8A", "#C8C8C8"] },
+      "edge":            { "role": "neutral",   "displayName": "Glass Edge",         "canonical": "rgba(255, 255, 255, 0.16)" },
+      "ink":             { "role": "neutral",   "displayName": "Ivory Ink",          "canonical": "#F4F5F0", "tonalRamp": ["#26271F", "#3E4037", "#5D5F55", "#808279", "#A4A69D", "#C6C8C0", "#E2E3DC", "#F4F5F0"] },
+      "ink-2":           { "role": "neutral",   "displayName": "Ivory Ink 84",       "canonical": "rgba(244, 245, 240, 0.84)" },
+      "ink-3":           { "role": "neutral",   "displayName": "Ivory Ink 70",       "canonical": "rgba(244, 245, 240, 0.70)" },
+      "acid-lime":       { "role": "primary",   "displayName": "Acid Lime",          "canonical": "#D4FF3A", "tonalRamp": ["#232B05", "#3B4A09", "#5A700F", "#7D9C15", "#A3CB1E", "#D4FF3A", "#E0FF6E", "#F1FFC2"] },
+      "acid-lime-hover": { "role": "primary",   "displayName": "Acid Lime Hover",    "canonical": "#E0FF6E" },
+      "on-lime":         { "role": "neutral",   "displayName": "On Lime",            "canonical": "#0E1014" },
+      "prod-red":        { "role": "secondary", "displayName": "Production Red",     "canonical": "#FF5A4E", "tonalRamp": ["#1A0503", "#3D0E09", "#6B1A12", "#A1281C", "#D63E30", "#FF5A4E", "#FF7A70", "#FFC9C4"] },
+      "prod-red-hover":  { "role": "secondary", "displayName": "Production Red Hover","canonical": "#FF7A70" },
+      "on-prod":         { "role": "neutral",   "displayName": "On Production",      "canonical": "#1A0503" },
+      "sandbox-blue":    { "role": "secondary", "displayName": "Sandbox Blue",       "canonical": "#7FD4FF", "tonalRamp": ["#04202E", "#0A3A52", "#125A7E", "#1F7FAF", "#45A9DB", "#7FD4FF", "#B0E5FF", "#E2F6FF"] },
+      "scratch-amber":   { "role": "secondary", "displayName": "Scratch Amber",      "canonical": "#FFC857", "tonalRamp": ["#2B1E02", "#4A3406", "#71500C", "#9C6F14", "#CC9320", "#FFC857", "#FFDB8F", "#FFF1D1"] }
+    },
+    "typographyMeta": {
+      "specimen": { "displayName": "Specimen", "purpose": "Selected org alias, uppercase. Fitted to the largest of 48/40/32/24/16 CSS px that fits without wrapping; each step snapped to a whole multiple of 8 device pixels." },
+      "title":    { "displayName": "Title",    "purpose": "State headlines and secondary-view bitmap headlines (the hotkey is the Settings specimen). Token --fs-title, DPR-snapped." },
+      "choice":   { "displayName": "Choice",   "purpose": "Add-org choice titles. Token --fs-choice, DPR-snapped." },
+      "keycap":   { "displayName": "Keycap",   "purpose": "Hotkey keycaps and the plus between them. Token --fs-cap, DPR-snapped." },
+      "code":     { "displayName": "Code",     "purpose": "Ribbons and env tags (700, 0.04em); footer keys, row serials, setting labels (400). Token --fs-code, DPR-snapped." },
+      "input":    { "displayName": "Input",    "purpose": "Search field and row aliases." },
+      "body":     { "displayName": "Body",     "purpose": "Sub line, descriptions, setting values, state paragraphs (max 46ch). Tabular numerals." },
+      "label":    { "displayName": "Label",    "purpose": "Button text (600); footer and usage counts (500)." }
+    },
+    "pixelGrid": {
+      "rule": "round(target * devicePixelRatio / 8) * 8 / devicePixelRatio",
+      "targets": { "--fs-code": 11, "--fs-cap": 18, "--fs-choice": 26, "--fs-title": 32, "specimen": [48, 40, 32, 24, 16] },
+      "resnap": "On matchMedia resolution change (monitor move, zoom)."
+    },
+    "glass": [
+      { "name": "glass",     "value": "rgba(30, 30, 30, 0.74) over Windows Acrylic", "purpose": "Default panel background in a transparent, frameless 620x520 window." },
+      { "name": "no-glass",  "value": "#1E1E1E", "purpose": "Applied via :root.no-glass when Windows transparency effects are off, and under prefers-reduced-transparency: reduce." },
+      { "name": "dot-screen","value": "radial-gradient(rgba(255,255,255,0.6) 0.6px, transparent 0.8px) 4px grid, opacity 0.18, masked to fade by 38%", "purpose": "Etched texture at the panel's top edge only." }
+    ],
+    "shadows": [
+      { "name": "glass-top-highlight", "value": "inset 0 1px 0 rgba(255, 255, 255, 0.14)", "purpose": "Panel top lip." },
+      { "name": "selection-ring",      "value": "inset 0 0 0 1px rgba(212, 255, 58, 0.55)", "purpose": "Selected row and choice." },
+      { "name": "selection-ring-prod", "value": "inset 0 0 0 1px rgba(255, 90, 78, 0.6)", "purpose": "Selected production / Dev Hub row." },
+      { "name": "keycap-bevel",        "value": "inset 0 -2px 0 rgba(0, 0, 0, 0.35)", "purpose": "Hotkey keycaps only." },
+      { "name": "toast-lift",          "value": "0 8px 24px rgba(0, 0, 0, 0.4)", "purpose": "The toast, the only floating element." }
+    ],
+    "motion": [
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Panel entry (140ms, 6px drop) and toast entry (160ms)." },
+      { "name": "state",         "value": "120ms", "purpose": "Background/color transitions on buttons, rows, cards." },
+      { "name": "reveal",        "value": "90ms steps(6, end) clip-path wipe", "purpose": "Specimen reveal on selection change." },
+      { "name": "scan",          "value": "1.2s steps(6) infinite", "purpose": "Skeleton bar pulse while loading." },
+      { "name": "reduced-motion","value": "animation: none; transition: none", "purpose": "All motion removed under prefers-reduced-motion." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The action: Open org, Save, Add org. Key hint inside at 62% opacity.",
+      "html": "<button class=\"ds-k ds-k-p\">Open org <span class=\"ds-hint\"><svg width=\"10\" height=\"8\" viewBox=\"0 0 10 8\" shape-rendering=\"crispEdges\" fill=\"currentColor\"><path d=\"M8 0h2v6H2v1h1v1H2V7H1V6H0V4h1V3h1V2h1v2h5z\"/></svg></span></button>",
+      "css": ".ds-k { height: 28px; padding: 0 11px; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; font: 600 12px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; border: 0; cursor: pointer; transition: background 120ms, transform 120ms; } .ds-k:active { transform: translateY(1px); } .ds-k:focus-visible { outline: 2px solid #D4FF3A; outline-offset: 2px; } .ds-k-p { background: #D4FF3A; color: #0E1014; } .ds-k-p:hover { background: #E0FF6E; } .ds-hint { opacity: 0.62; font-weight: 500; display: inline-flex; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Every non-primary action: Copy link, Cancel, Export, Record new.",
+      "html": "<button class=\"ds-k2\">Copy link <span class=\"ds-hint2\">Ctrl L</span></button>",
+      "css": ".ds-k2 { height: 28px; padding: 0 11px; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; font: 600 12px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; background: rgba(255,255,255,0.10); color: #F4F5F0; border: 0; cursor: pointer; transition: background 120ms, transform 120ms; } .ds-k2:hover { background: rgba(255,255,255,0.17); } .ds-k2:active { transform: translateY(1px); } .ds-k2:focus-visible { outline: 2px solid #D4FF3A; outline-offset: 2px; } .ds-hint2 { opacity: 0.62; font-weight: 500; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Confirming removal of a local org login.",
+      "html": "<button class=\"ds-k3\">Remove ACME UAT</button>",
+      "css": ".ds-k3 { height: 28px; padding: 0 11px; border-radius: 7px; font: 600 12px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; background: #FF5A4E; color: #1A0503; border: 0; cursor: pointer; transition: background 120ms; } .ds-k3:hover { background: #FF7A70; } .ds-k3:focus-visible { outline: 2px solid #D4FF3A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Bar",
+      "kind": "input",
+      "refersTo": "icon-button",
+      "description": "50px bar: line search icon, borderless input with lime caret, toolbar icon buttons.",
+      "html": "<div class=\"ds-bar\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-4-4\"/></svg><input class=\"ds-search\" placeholder=\"Search orgs\"/><button class=\"ds-ic\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></button></div>",
+      "css": ".ds-bar { display: flex; align-items: center; gap: 8px; height: 50px; padding: 0 12px 0 18px; background: rgba(30,30,30,0.74); color: rgba(244,245,240,0.84); } .ds-search { flex: 1; min-width: 0; margin-left: 4px; background: transparent; border: 0; outline: none; color: #F4F5F0; caret-color: #D4FF3A; font: 600 15px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; } .ds-search::placeholder { color: rgba(244,245,240,0.70); font-weight: 500; } .ds-ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; border: 0; cursor: pointer; color: rgba(244,245,240,0.84); background: rgba(255,255,255,0.07); transition: background 120ms, color 120ms; } .ds-ic:hover { background: rgba(255,255,255,0.13); color: #F4F5F0; } .ds-ic:focus-visible { outline: 2px solid #D4FF3A; outline-offset: 2px; }"
+    },
+    {
+      "name": "Specimen Block",
+      "kind": "custom",
+      "refersTo": "env-ribbon",
+      "description": "Selected alias in Silkscreen with a 4px environment rule; ribbon, username, usage beneath.",
+      "html": "<div class=\"ds-spec\"><h1 class=\"ds-hl\"><span class=\"ds-word\">ACME UAT</span></h1><div class=\"ds-sub\"><span class=\"ds-ribbon\">SANDBOX</span><span>dev@acme.example.uat</span><span>×42</span></div></div>",
+      "css": ".ds-spec { padding: 6px 18px 16px; border-bottom: 1px solid rgba(255,255,255,0.16); background: rgba(30,30,30,0.74); } .ds-hl { margin: 0; font: 400 48px/1 'Silkscreen', 'Courier New', monospace; letter-spacing: -0.01em; color: #F4F5F0; white-space: nowrap; } .ds-word { display: inline-block; padding-bottom: 6px; border-bottom: 4px solid #7FD4FF; } .ds-sub { display: flex; align-items: center; gap: 12px; margin-top: 12px; font: 500 13px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; color: rgba(244,245,240,0.84); } .ds-ribbon { font: 700 11px 'Silkscreen', 'Courier New', monospace; letter-spacing: 0.04em; color: #0E1014; background: #7FD4FF; padding: 4px 7px 3px; }"
+    },
+    {
+      "name": "Org Row",
+      "kind": "custom",
+      "refersTo": "org-row",
+      "description": "Identical 40px list row: serial, alias, env tag, usage. Selected gets lime tint and ring; production selected gets red.",
+      "html": "<button class=\"ds-row ds-sel\"><span class=\"ds-n\">1</span><span class=\"ds-a\">ACME UAT</span><span class=\"ds-c\" style=\"color:#7FD4FF\">SBX</span><span class=\"ds-u\">×42</span></button><button class=\"ds-row\"><span class=\"ds-n\">2</span><span class=\"ds-a\">ACME PROD</span><span class=\"ds-c\" style=\"color:#FF5A4E\">PROD</span><span class=\"ds-u\">×17</span></button>",
+      "css": ".ds-row { display: grid; grid-template-columns: 22px 1fr auto 44px; align-items: center; gap: 12px; width: 100%; height: 40px; padding: 0 12px; border-radius: 9px; border: 0; background: transparent; color: rgba(244,245,240,0.84); text-align: left; cursor: pointer; transition: background 120ms; } .ds-row:hover { background: rgba(255,255,255,0.05); } .ds-sel { background: rgba(212,255,58,0.10); box-shadow: inset 0 0 0 1px rgba(212,255,58,0.55); } .ds-n { font: 400 11px 'Silkscreen', 'Courier New', monospace; color: rgba(244,245,240,0.70); } .ds-a { font: 600 15px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; color: #F4F5F0; } .ds-c { font: 700 11px 'Silkscreen', 'Courier New', monospace; letter-spacing: 0.04em; padding: 3px 5px 2px; border: 1px solid currentColor; } .ds-u { font: 500 12px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; text-align: right; }"
+    },
+    {
+      "name": "Choice Card",
+      "kind": "card",
+      "refersTo": "choice-card",
+      "description": "Add-org option with Silkscreen title, ribbon + description, numbered key, and pixel progress while waiting.",
+      "html": "<button class=\"ds-choice\"><span class=\"ds-t\">SANDBOX</span><span class=\"ds-d\">test.salesforce.com</span><span class=\"ds-kk\">2</span></button>",
+      "css": ".ds-choice { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 16px; padding: 16px 18px; border-radius: 12px; border: 0; text-align: left; cursor: pointer; background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16); transition: background 120ms, box-shadow 120ms; } .ds-choice:hover { background: rgba(255,255,255,0.09); } .ds-choice:focus-visible { outline: 2px solid #D4FF3A; outline-offset: 2px; } .ds-t { font: 400 26px/1 'Silkscreen', 'Courier New', monospace; color: #F4F5F0; } .ds-d { grid-column: 1; font: 500 13px 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif; color: rgba(244,245,240,0.84); } .ds-kk { grid-row: 1 / 3; grid-column: 2; height: 28px; padding: 0 11px; border-radius: 7px; display: inline-flex; align-items: center; font: 600 12px 'Hanken Grotesk', sans-serif; background: rgba(255,255,255,0.10); color: #F4F5F0; }"
+    },
+    {
+      "name": "Keycap and Footer Key",
+      "kind": "chip",
+      "refersTo": "keycap",
+      "description": "Hotkey keycaps (18px Silkscreen, bevel; lime while recording) and footer shortcut keys (11px).",
+      "html": "<span class=\"ds-cap\">CTRL</span> <span class=\"ds-plus\">+</span> <span class=\"ds-cap\">SPACE</span> <span class=\"ds-cap ds-rec\">PRESS KEYS…</span><div class=\"ds-foot\"><span><kbd class=\"ds-kbd\">Ctrl L</kbd>Link</span><span><kbd class=\"ds-kbd\">Esc</kbd>Back</span></div>",
+      "css": ".ds-cap { font: 400 18px 'Silkscreen', 'Courier New', monospace; padding: 7px 10px 6px; border-radius: 6px; background: rgba(255,255,255,0.10); color: #F4F5F0; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.35); } .ds-rec { background: rgba(212,255,58,0.16); color: #D4FF3A; } .ds-plus { font: 400 18px 'Silkscreen', monospace; color: rgba(244,245,240,0.70); } .ds-foot { display: flex; gap: 13px; height: 38px; align-items: center; padding: 0 18px; margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.16); font: 500 12px 'Hanken Grotesk', sans-serif; color: rgba(244,245,240,0.84); } .ds-kbd { font: 400 11px 'Silkscreen', 'Courier New', monospace; padding: 3px 5px 2px; border-radius: 4px; background: rgba(255,255,255,0.10); color: #F4F5F0; margin-right: 4px; }"
+    },
+    {
+      "name": "Pixel Enter Tile",
+      "kind": "custom",
+      "description": "App and tray icon: 16x16 lime Enter on VS Code black with a #3C3C3C edge, scaled by whole pixels.",
+      "html": "<svg class=\"ds-tile\" width=\"32\" height=\"32\" viewBox=\"0 0 16 16\" shape-rendering=\"crispEdges\"><path fill=\"#3C3C3C\" d=\"M2 0h12v1H2zM1 1h1v1H1zM14 1h1v1h-1zM0 2h1v12H0zM15 2h1v12h-1zM1 14h1v1H1zM14 14h1v1h-1zM2 15h12v1H2z\"/><path fill=\"#1E1E1E\" d=\"M2 1h12v1h1v12h-1v1H2v-1H1V2h1z\"/><path fill=\"#D4FF3A\" d=\"M11 4h2v6H4V9H3V8h1V7h1V6h1v2h5zM4 10h1v1h1v1H5v-1H4z\"/></svg>",
+      "css": ".ds-tile { image-rendering: pixelated; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Bitmap Specimen on Smoked Glass",
+    "overview": "One fixed 620×520 frameless window, always on top, floating over whatever the user was doing. The window is Windows 11 Acrylic; the panel tints it with VS Code Dark black so the desktop shows through as a dim blur. Inside, the selected org is set as a type specimen in a bitmap face, as large as its name allows, with a solid rule underneath in its environment colour. Everything else (the search bar, the identical list rows, the shortcut footer) is set small in a quiet grotesque and stays out of the way.\n\nThe system is dense and keyboard-first. Hierarchy comes from scale contrast between the pixel headline and everything else, not from colour or weight. Colour is semantic: one acid lime for focus and the primary action, one colour per Salesforce environment, and red for anything that touches production. The pixel face carries over into small codes (environment tags, keys, row serials, setting labels), the Enter glyph, the progress bar, and the tray icon, so the bitmap grid reads as the house material rather than a headline gimmick.",
+    "keyCharacteristics": [
+      "Smoked glass panel (74% VS Code black over Acrylic) with a 1px light edge and a fading etched dot screen at the top.",
+      "Silkscreen bitmap for the specimen, titles, and every code or key; Hanken Grotesk for everything read.",
+      "Every bitmap size snapped to whole multiples of 8 device pixels, re-snapped on display-scale change.",
+      "Acid lime is reserved for focus, the primary action, and success; environment colours carry identity; production is red everywhere.",
+      "Motion is short and stepped where it touches the pixel world (reveal, skeleton scan); everything collapses under reduced motion."
+    ],
+    "rules": [
+      { "name": "The One Acid Rule", "body": "Lime means \"this is focused\" or \"this is the action\". It never decorates and never labels an environment.", "section": "colors" },
+      { "name": "The Production Is Red Everywhere Rule", "body": "Production and Dev Hub share prod-red on every surface: ribbon, tag, specimen ink, selected-row ring. Dev Hubs live in production orgs and get the same warning; there is no separate Dev Hub colour.", "section": "colors" },
+      { "name": "The Ribbon Per Environment Rule", "body": "Each environment owns exactly one colour, used as ribbon fill, tag text and border, and specimen underline. Do not add a second hue for an environment or reuse an environment hue for anything else.", "section": "colors" },
+      { "name": "The Pixel Grid Rule", "body": "Silkscreen is only ever set at a size that is a whole multiple of 8 device pixels at the current devicePixelRatio. Sizes are declared as targets in CSS px and snapped at runtime (`round(target × dpr / 8) × 8 / dpr`), and re-snapped when the window moves to a display with a different scale. Never hard-code a bitmap font size in CSS without routing it through the snapper.", "section": "typography" },
+      { "name": "The Bitmap Means Name Or Key Rule", "body": "Silkscreen sets names, codes, and keys only. Sentences, usernames, descriptions, and button labels stay in Hanken Grotesk.", "section": "typography" },
+      { "name": "The One Key Notation Rule", "body": "Shortcuts are written `Ctrl L`, `Ctrl 1-9`, `Esc` (space-separated, no plus signs), and Enter is always the pixel Enter glyph, never the ↵ character.", "section": "typography" },
+      { "name": "The Glass Or Solid Rule", "body": "The panel is glass when Windows transparency is on and solid VS Code black when it is off or reduced transparency is requested. Never let the Acrylic fallback grey show.", "section": "elevation" },
+      { "name": "The Etched Screen Rule", "body": "A 4px dot screen at 18% opacity fades out over the top 38% of the panel. It is the only texture; it never covers content density elsewhere.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do route every Silkscreen size through the pixel-grid snapper and pick from the 48/40/32/24/16 steps for fitted headlines.",
+      "Do colour an org by its environment only, and treat Dev Hub exactly like production.",
+      "Do keep the 18px gutter and identical 40px rows; selection changes tint and ring, never size.",
+      "Do fall back to solid VS Code black (#1E1E1E) whenever transparency is off or reduced.",
+      "Do write shortcuts as `Ctrl X` and draw Enter with the pixel glyph.",
+      "Do use stepped timing for pixel-world motion and honour reduced motion by removing all animation."
+    ],
+    "donts": [
+      "Don't use acid lime for decoration, environment identity, or large fills beyond the primary button and success toast.",
+      "Don't set sentences, usernames, or button labels in Silkscreen.",
+      "Don't set Silkscreen at an unsnapped size; fractional device pixels blur the bitmap.",
+      "Don't round ribbons, env tags, progress cells, or the specimen rule.",
+      "Don't use the ↵ character or `Ctrl+` notation."
+    ]
+  }
+}

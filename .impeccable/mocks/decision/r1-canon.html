@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<style>
+:root{--glass:rgba(30,30,30,.72);--edge:rgba(255,255,255,.12);--text:#F2F2F4;--mute:rgba(242,242,244,.68);--accent:#0078D4}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:620px;height:520px;overflow:hidden}
+body{position:relative;font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;color:var(--text);
+  background:radial-gradient(60% 70% at 15% 20%,#2F6BFF 0,transparent 60%),radial-gradient(50% 60% at 90% 80%,#FF7A3D 0,transparent 60%),#20262F}
+.win{position:absolute;border-radius:8px;background:#1E1E1E}
+.win i{display:block;height:6px;margin:10px 14px;border-radius:3px;background:#3A6FD8}
+.panel{position:absolute;inset:0;border-radius:12px;background:var(--glass);backdrop-filter:blur(40px) saturate(170%);border:1px solid var(--edge);display:flex;flex-direction:column;overflow:hidden}
+.bar{height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--edge)}
+.q{flex:1;font-size:17px}.q i{display:inline-block;width:2px;height:19px;background:var(--accent);vertical-align:-4px}
+.ic{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;color:var(--mute)}
+.list{flex:1;padding:8px;display:flex;flex-direction:column;gap:2px}
+.r{height:48px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:8px}
+.r.sel{background:rgba(255,255,255,.1)}
+.dot{width:10px;height:10px;border-radius:50%}
+.t{display:flex;flex-direction:column}.t b{font-size:14px;font-weight:600}.t span{font-size:12px;color:var(--mute)}
+.b{margin-left:auto;font-size:12px;color:var(--mute)}
+.foot{height:40px;display:flex;align-items:center;gap:14px;padding:0 16px;border-top:1px solid var(--edge);font-size:12px;color:var(--mute)}
+.foot kbd{font:inherit;font-size:11px;background:rgba(255,255,255,.1);border-radius:4px;padding:1px 6px;margin-right:4px;color:var(--text)}
+.foot .n{margin-left:auto}
+</style></head><body>
+<div class="win" style="left:-30px;top:40px;width:380px;height:300px"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="panel">
+  <div class="bar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><div class="q">acme<i></i></div>
+    <div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div></div>
+  <div class="list">
+    <div class="r sel"><span class="dot" style="background:#F5B544"></span><div class="t"><b>Acme Retail · UAT</b><span>dev.team@acme-retail.com.uat</span></div><span class="b">Sandbox</span></div>
+    <div class="r"><span class="dot" style="background:#F5B544"></span><div class="t"><b>Acme Retail · Fix</b><span>dev.team@acme-retail.com.fix</span></div><span class="b">Sandbox</span></div>
+    <div class="r"><span class="dot" style="background:#FF6B5E"></span><div class="t"><b>Acme Retail · Production</b><span>dev.team@acme-retail.com</span></div><span class="b">Production</span></div>
+    <div class="r"><span class="dot" style="background:#B38CFF"></span><div class="t"><b>Acme Dev Hub</b><span>hub@acme-retail.com</span></div><span class="b">Dev Hub</span></div>
+    <div class="r"><span class="dot" style="background:#4CC9B0"></span><div class="t"><b>Acme Feature Scratch</b><span>expires Nov 4</span></div><span class="b">Scratch</span></div>
+    <div class="r"><span class="dot" style="background:#F5B544"></span><div class="t"><b>Northwind Logistics · QA</b><span>qa@northwind.com.qa</span></div><span class="b">Sandbox</span></div>
+  </div>
+  <div class="foot"><span><kbd>↵</kbd>Open</span><span><kbd>Ctrl L</kbd>Copy link</span><span class="n">synthetic data</span></div>
+</div>
+</body></html>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { api } from './api'
 import { CommandPalette } from './components/CommandPalette'
 import type { SfOrg } from '../../shared/types'
 
@@ -19,8 +20,8 @@ export default function App() {
 
     try {
       const res = force
-        ? await window.electronAPI.refreshOrgs()
-        : await window.electronAPI.listOrgs()
+        ? await api.refreshOrgs()
+        : await api.listOrgs()
 
       if (res.success) {
         setOrgs(res.data)
@@ -42,9 +43,9 @@ export default function App() {
     fetchOrgs()
 
     // Tray context menu triggered a refresh
-    const cleanForce    = window.electronAPI.onForceRefresh(() => fetchOrgs(true))
+    const cleanForce    = api.onForceRefresh(() => fetchOrgs(true))
     // Main process pushed fresh data after a background refresh
-    const cleanRefreshed = window.electronAPI.onOrgsRefreshed(fresh => {
+    const cleanRefreshed = api.onOrgsRefreshed(fresh => {
       setOrgs(fresh)
       setLoadState('ready')
       setIsRefreshing(false)

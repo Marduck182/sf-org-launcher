@@ -1,94 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { api } from '../api'
 import type { SfOrg } from '../../../shared/types'
-import { OrgItem } from './OrgItem'
-import { HotkeyRecorder } from './HotkeyRecorder'
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function IconSearch() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="text-overlay0 shrink-0"
-    >
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-    </svg>
-  )
-}
-
-function IconRefresh({ spinning }: { spinning: boolean }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-      className={spinning ? 'animate-spin' : ''}
-    >
-      <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-      <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-    </svg>
-  )
-}
-
-function IconCloud() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-    >
-      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
-    </svg>
-  )
-}
-
-function IconAlert() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      className="text-red shrink-0 mt-0.5"
-    >
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-  )
-}
-
-function IconSettings() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-      <circle cx="12" cy="12" r="3"/>
-    </svg>
-  )
-}
-
-function IconPlus() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-    >
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
-  )
-}
-
-// ── Key-hint chip ──────────────────────────────────────────────────────────────
-
-function KeyChip({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded
-      border border-surface1 bg-surface0 text-overlay1 text-[10px] font-mono leading-none">
-      {label}
-    </span>
-  )
-}
-
-function KeyHint({ keys, desc }: { keys: string[]; desc: string }) {
-  return (
-    <span className="flex items-center gap-1 text-overlay0 text-[11px]">
-      {keys.map(k => <KeyChip key={k} label={k} />)}
-      <span className="ml-0.5">{desc}</span>
-    </span>
-  )
-}
+import { OrgItem, ENV_LABEL, isProduction } from './OrgItem'
+import { SettingsView } from './SettingsView'
+import { SpecimenInput, SpecimenText, SpecimenTitle } from './Specimen'
+import {
+  EnterGlyph, IconBack, IconPencil, IconPlus, IconRefresh, IconSearch, IconSliders, IconTrash
+} from './icons'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -100,7 +18,15 @@ interface Props {
   onRefresh:    () => void
 }
 
-// ── Fuzzy filter ──────────────────────────────────────────────────────────────
+type View  = 'list' | 'add' | 'settings'
+type Toast = { kind: 'ok' | 'err'; msg: string }
+
+const LOGIN_URLS = {
+  production: 'https://login.salesforce.com',
+  sandbox:    'https://test.salesforce.com',
+} as const
+
+// ── Filter ────────────────────────────────────────────────────────────────────
 
 function filterOrgs(orgs: SfOrg[], q: string): SfOrg[] {
   if (!q.trim()) return orgs
@@ -113,180 +39,239 @@ function filterOrgs(orgs: SfOrg[], q: string): SfOrg[] {
   )
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
-
-interface Toast { kind: 'ok' | 'err'; msg: string }
+function formatExpiry(date?: string): string | null {
+  if (!date) return null
+  const d = new Date(date)
+  if (isNaN(d.getTime())) return null
+  return `Expires ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh }: Props) {
-  const [query,        setQuery]        = useState('')
-  const [selected,     setSelected]     = useState(0)
-  const [toast,        setToast]        = useState<Toast | null>(null)
-  const [loadingOrgId, setLoadingOrgId] = useState<string | null>(null)
-  const [openedOrgId,  setOpenedOrgId]  = useState<string | null>(null)
-  const [copyingOrgId, setCopyingOrgId] = useState<string | null>(null)
-  const [copiedOrgId,  setCopiedOrgId]  = useState<string | null>(null)
-  const [editingOrgId, setEditingOrgId] = useState<string | null>(null)
-  const [editValue,    setEditValue]    = useState('')
-  const [showSettings, setShowSettings] = useState(false)
-  const [showLogin,    setShowLogin]    = useState(false)
-  const [isLoggingIn,  setIsLoggingIn]  = useState(false)
-  const [removingOrgId, setRemovingOrgId] = useState<string | null>(null)
+  const [query,         setQuery]         = useState('')
+  const [selected,      setSelected]      = useState(0)
+  const [view,          setView]          = useState<View>('list')
+  const [toast,         setToast]         = useState<Toast | null>(null)
+  const [openingId,     setOpeningId]     = useState<string | null>(null)
+  const [openedId,      setOpenedId]      = useState<string | null>(null)
+  const [copyingId,     setCopyingId]     = useState<string | null>(null)
+  const [copiedId,      setCopiedId]      = useState<string | null>(null)
+  const [renamingId,    setRenamingId]    = useState<string | null>(null)
+  const [renameValue,   setRenameValue]   = useState('')
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
+  const [removingId,    setRemovingId]    = useState<string | null>(null)
+  const [loggingIn,     setLoggingIn]     = useState<keyof typeof LOGIN_URLS | null>(null)
+  const [progress,      setProgress]      = useState(0)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef  = useRef<HTMLDivElement>(null)
-
-  // ── Focus on show ───────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const remove = window.electronAPI.onWindowShow(() => {
-      setQuery('')
-      setSelected(0)
-      requestAnimationFrame(() => {
-        inputRef.current?.focus()
-        inputRef.current?.select()
-      })
-    })
-    // Also focus on first render
-    setTimeout(() => inputRef.current?.focus(), 80)
-    return remove
-  }, [])
-
-  // ── Derived state ───────────────────────────────────────────────────────────
+  const panelRef = useRef<HTMLDivElement>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const visible = filterOrgs(orgs, query)
+  const current = visible[selected] as SfOrg | undefined
 
-  // Reset selection on query change
-  useEffect(() => setSelected(0), [query])
+  // ── Show / focus ────────────────────────────────────────────────────────────
 
-  // Scroll selected item into view
+  const focusSearch = useCallback(() => {
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    })
+  }, [])
+
+  useEffect(() => {
+    const remove = api.onWindowShow(() => {
+      setQuery('')
+      setSelected(0)
+      setView('list')
+      setRenamingId(null)
+      setConfirmRemove(null)
+      focusSearch()
+    })
+    setTimeout(() => inputRef.current?.focus(), 80)
+    return remove
+  }, [focusSearch])
+
+  // Back to the list → search gets focus again; other views take keyboard focus on the panel
+  useEffect(() => {
+    if (view === 'list') focusSearch()
+    else panelRef.current?.focus()
+  }, [view, focusSearch])
+
+  useEffect(() => { setSelected(0) }, [query])
+  useEffect(() => { setConfirmRemove(null) }, [selected, query])
+  useEffect(() => {
+    if (selected >= visible.length && visible.length > 0) setSelected(visible.length - 1)
+  }, [visible.length, selected])
+
   useEffect(() => {
     const items = listRef.current?.querySelectorAll<HTMLElement>('[data-org-item]')
     items?.[selected]?.scrollIntoView({ block: 'nearest' })
   }, [selected])
 
-  // ── Toast helper ────────────────────────────────────────────────────────────
+  // Pixel progress bar while waiting for the browser login
+  useEffect(() => {
+    if (!loggingIn) { setProgress(0); return }
+    const id = setInterval(() => setProgress(p => (p + 1) % 13), 380)
+    return () => clearInterval(id)
+  }, [loggingIn])
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
 
   const showToast = useCallback((kind: Toast['kind'], msg: string) => {
+    clearTimeout(toastTimer.current)
     setToast({ kind, msg })
-    setTimeout(() => setToast(null), 2_500)
+    toastTimer.current = setTimeout(() => setToast(null), 2_600)
   }, [])
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
   const openOrg = useCallback(async (org: SfOrg) => {
-    setLoadingOrgId(org.orgId)
-    setOpenedOrgId(null)
-
+    if (openingId) return
+    setOpeningId(org.orgId)
+    setOpenedId(null)
     const guard = setTimeout(() => {
-      setLoadingOrgId(null)
-      showToast('err', 'Timed out — the CLI took too long to respond')
+      setOpeningId(null)
+      showToast('err', 'Salesforce took too long to respond. Try again.')
     }, 15_000)
 
     try {
-      await window.electronAPI.incrementUsage(org.orgId)
-      const res = await window.electronAPI.openOrg(org.alias || org.username)
+      await api.incrementUsage(org.orgId)
+      const res = await api.openOrg(org.alias || org.username)
       if (!res.success) {
         showToast('err', res.error)
       } else {
-        // Mostrar palomita brevemente antes de cerrar
-        setOpenedOrgId(org.orgId)
+        setOpenedId(org.orgId)
         setTimeout(() => {
-          setOpenedOrgId(null)
-          window.electronAPI.hideWindow()
-        }, 800)
+          setOpenedId(null)
+          api.hideWindow()
+        }, 650)
       }
     } finally {
       clearTimeout(guard)
-      setLoadingOrgId(null)
+      setOpeningId(null)
     }
-  }, [showToast])
+  }, [openingId, showToast])
 
   const copyLink = useCallback(async (org: SfOrg) => {
-    setCopyingOrgId(org.orgId)
-    setCopiedOrgId(null)
-
+    setCopyingId(org.orgId)
+    setCopiedId(null)
     const guard = setTimeout(() => {
-      setCopyingOrgId(null)
-      showToast('err', 'Timed out — could not generate login URL')
+      setCopyingId(null)
+      showToast('err', 'Could not generate the login link in time. Try again.')
     }, 15_000)
 
     try {
-      const res = await window.electronAPI.copyOrgLink(org.alias || org.username)
+      const res = await api.copyOrgLink(org.alias || org.username)
       if (!res.success) {
         showToast('err', res.error)
       } else {
-        setCopiedOrgId(org.orgId)
-        showToast('ok', 'Login URL copied to clipboard')
-        setTimeout(() => setCopiedOrgId(null), 2_500)
+        setCopiedId(org.orgId)
+        showToast('ok', 'Login link copied · single use')
+        setTimeout(() => setCopiedId(null), 2_500)
       }
     } finally {
       clearTimeout(guard)
-      setCopyingOrgId(null)
+      setCopyingId(null)
     }
   }, [showToast])
 
-  const loginOrg = useCallback(async (loginUrl: string) => {
-    setIsLoggingIn(true)
+  const loginOrg = useCallback(async (env: keyof typeof LOGIN_URLS) => {
+    if (loggingIn) return
+    setLoggingIn(env)
     try {
-      const res = await window.electronAPI.loginOrg(loginUrl)
+      const res = await api.loginOrg(LOGIN_URLS[env])
       if (!res.success) {
         showToast('err', res.error)
       } else {
-        showToast('ok', 'Org added successfully')
-        setShowLogin(false)
+        showToast('ok', 'Org added')
+        setView('list')
       }
     } finally {
-      setIsLoggingIn(false)
+      setLoggingIn(null)
     }
-  }, [showToast])
+  }, [loggingIn, showToast])
 
+  /** First press arms, second press removes — no accidental deletes. */
   const removeOrg = useCallback(async (org: SfOrg) => {
-    setRemovingOrgId(org.orgId)
-    try {
-      const res = await window.electronAPI.removeOrg(org.username)
-      if (!res.success) {
-        showToast('err', res.error)
-      } else {
-        showToast('ok', `${org.alias} removed`)
-      }
-    } finally {
-      setRemovingOrgId(null)
-    }
-  }, [showToast])
-
-  const renameStart = useCallback((org: SfOrg) => {
-    setEditingOrgId(org.orgId)
-    setEditValue(org.alias)
-  }, [])
-
-  const renameSubmit = useCallback(async () => {
-    if (!editingOrgId) return
-    const org = orgs.find(o => o.orgId === editingOrgId)
-    if (!org || !editValue.trim() || editValue.trim() === org.alias) {
-      setEditingOrgId(null)
+    if (confirmRemove !== org.orgId) {
+      setConfirmRemove(org.orgId)
       return
     }
+    setConfirmRemove(null)
+    setRemovingId(org.orgId)
     try {
-      const res = await window.electronAPI.renameOrg(org.username, editValue.trim())
-      if (!res.success) {
-        showToast('err', res.error)
-      } else {
-        showToast('ok', `Renamed to ${editValue.trim()}`)
-      }
+      const res = await api.removeOrg(org.username)
+      if (!res.success) showToast('err', res.error)
+      else showToast('ok', `${org.alias} removed from this computer`)
     } finally {
-      setEditingOrgId(null)
+      setRemovingId(null)
+      focusSearch()
     }
-  }, [editingOrgId, editValue, orgs, showToast])
+  }, [confirmRemove, showToast, focusSearch])
 
-  const renameCancel = useCallback(() => {
-    setEditingOrgId(null)
+  const renameStart = useCallback((org: SfOrg) => {
+    setConfirmRemove(null)
+    setRenamingId(org.orgId)
+    setRenameValue(org.alias)
   }, [])
 
-  // ── Keyboard navigation ─────────────────────────────────────────────────────
+  const renameCancel = useCallback(() => {
+    setRenamingId(null)
+    focusSearch()
+  }, [focusSearch])
+
+  const renameSubmit = useCallback(async () => {
+    const org = orgs.find(o => o.orgId === renamingId)
+    const next = renameValue.trim()
+    if (!org || !next || next === org.alias) { renameCancel(); return }
+    try {
+      const res = await api.renameOrg(org.username, next)
+      if (!res.success) showToast('err', res.error)
+      else showToast('ok', `Renamed to ${next}`)
+    } finally {
+      renameCancel()
+    }
+  }, [orgs, renamingId, renameValue, showToast, renameCancel])
+
+  const goTo = useCallback((v: View) => {
+    setRenamingId(null)
+    setConfirmRemove(null)
+    setView(prev => (prev === v ? 'list' : v))
+  }, [])
+
+  // ── Keyboard ────────────────────────────────────────────────────────────────
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const ctrl = e.ctrlKey || e.metaKey
+
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      if (confirmRemove) setConfirmRemove(null)
+      else if (view !== 'list') setView('list')
+      else api.hideWindow()
+      return
+    }
+    if (ctrl && e.key.toLowerCase() === 'n') { e.preventDefault(); goTo('add'); return }
+    if (ctrl && e.key === ',')               { e.preventDefault(); goTo('settings'); return }
+    if (ctrl && e.key.toLowerCase() === 'r') { e.preventDefault(); onRefresh(); return }
+
+    if (view === 'add') {
+      if (e.key === '1') loginOrg('production')
+      if (e.key === '2') loginOrg('sandbox')
+      return
+    }
+    if (view !== 'list' || renamingId) return
+
+    if (ctrl && /^[1-9]$/.test(e.key)) {
+      e.preventDefault()
+      const target = visible[Number(e.key) - 1]
+      if (target) { setSelected(Number(e.key) - 1); openOrg(target) }
+      return
+    }
+
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
@@ -297,261 +282,226 @@ export function CommandPalette({ orgs, loadState, error, isRefreshing, onRefresh
         setSelected(i => Math.max(i - 1, 0))
         break
       case 'Enter':
-        if (visible[selected]) openOrg(visible[selected])
-        break
-      case 'l':
-      case 'L':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault()
-          if (visible[selected]) copyLink(visible[selected])
-        }
-        break
-      case 'd':
-      case 'D':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault()
-          if (visible[selected]) removeOrg(visible[selected])
-        }
-        break
-      case 'e':
-      case 'E':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault()
-          if (visible[selected]) renameStart(visible[selected])
-        }
-        break
-      case 'r':
-      case 'R':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault()
-          onRefresh()
-        }
-        break
-      case 'Escape':
-        window.electronAPI.hideWindow()
+        e.preventDefault()
+        if (current && confirmRemove === current.orgId) removeOrg(current)
+        else if (current) openOrg(current)
         break
     }
-  }, [visible, selected, openOrg, copyLink, removeOrg, renameStart, onRefresh])
+    if (!ctrl || !current) return
+    switch (e.key.toLowerCase()) {
+      case 'l': e.preventDefault(); copyLink(current);    break
+      case 'd': e.preventDefault(); removeOrg(current);   break
+      case 'e': e.preventDefault(); renameStart(current); break
+    }
+  }, [view, renamingId, confirmRemove, visible, current, goTo, onRefresh, loginOrg, openOrg, copyLink, removeOrg, renameStart])
+
+  // ── Pieces ──────────────────────────────────────────────────────────────────
+
+  const searchBar = (
+    <div className="bar">
+      {view === 'list'
+        ? <>
+            <IconSearch />
+            <input
+              ref={inputRef}
+              className="search-input"
+              type="text"
+              placeholder="Search orgs by alias, user or URL"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              aria-label="Search orgs"
+            />
+          </>
+        : <>
+            <button type="button" className="ic" onClick={() => setView('list')} title="Back (Esc)" aria-label="Back to orgs">
+              <IconBack />
+            </button>
+            <span style={{ flex: 1 }} />
+          </>}
+      <button type="button" className="ic" onClick={onRefresh} disabled={isRefreshing} title="Refresh orgs (Ctrl R)" aria-label="Refresh orgs">
+        <IconRefresh spinning={isRefreshing} />
+      </button>
+      <button type="button" className={`ic${view === 'add' ? ' on' : ''}`} onClick={() => goTo('add')} title="Add org (Ctrl N)" aria-label="Add org">
+        <IconPlus />
+      </button>
+      <button type="button" className={`ic${view === 'settings' ? ' on' : ''}`} onClick={() => goTo('settings')} title="Settings (Ctrl ,)" aria-label="Settings">
+        <IconSliders />
+      </button>
+    </div>
+  )
+
+  const specimen = current && (
+    <div className="spec">
+      {renamingId === current.orgId
+        ? <SpecimenInput value={renameValue} onChange={setRenameValue} onSubmit={renameSubmit} onCancel={renameCancel} />
+        : <SpecimenTitle key={current.orgId} text={current.alias} orgType={current.orgType} />}
+
+      <div className="sub">
+        <span className={`ribbon b-${current.orgType}`}>{ENV_LABEL[current.orgType]}</span>
+        {current.isDefaultUsername && <span className="tag">DEFAULT</span>}
+        <span className="user">{current.username}</span>
+        {formatExpiry(current.expirationDate) && <span>{formatExpiry(current.expirationDate)}</span>}
+        {current.usageCount > 0 && <span>×{current.usageCount}</span>}
+      </div>
+
+      <div className="actions">
+        {renamingId === current.orgId ? (
+          <>
+            <button type="button" className="k p" onClick={renameSubmit}>Save alias <span className="hint"><EnterGlyph /></span></button>
+            <button type="button" className="k" onClick={renameCancel}>Cancel <span className="hint">Esc</span></button>
+          </>
+        ) : confirmRemove === current.orgId ? (
+          <>
+            <button type="button" className="k danger" onClick={() => removeOrg(current)}>Remove {current.alias} <span className="hint"><EnterGlyph /></span></button>
+            <button type="button" className="k" onClick={() => setConfirmRemove(null)}>Keep it <span className="hint">Esc</span></button>
+            <span className="spacer" />
+            <span style={{ color: 'var(--ink-2)', fontSize: 12 }}>Only removes the login from this computer</span>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`k ${isProduction(current.orgType) ? 'danger' : 'p'}`}
+              onClick={() => openOrg(current)}
+              disabled={!!openingId}
+            >
+              {openingId === current.orgId ? 'Opening…'
+                : openedId === current.orgId ? 'Opened'
+                : isProduction(current.orgType) ? 'Open production' : 'Open'}
+              <span className="hint"><EnterGlyph /></span>
+            </button>
+            <button type="button" className="k" onClick={() => copyLink(current)} disabled={copyingId === current.orgId}>
+              {copyingId === current.orgId ? 'Copying…' : copiedId === current.orgId ? 'Copied' : 'Copy link'}
+              <span className="hint">Ctrl L</span>
+            </button>
+            <span className="spacer" />
+            <button type="button" className="k icon" onClick={() => renameStart(current)} title="Rename alias (Ctrl E)" aria-label="Rename alias">
+              <IconPencil />
+            </button>
+            <button type="button" className="k icon" onClick={() => removeOrg(current)} title="Remove from this computer (Ctrl D)" aria-label="Remove org">
+              <IconTrash />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  const listView = (() => {
+    if (loadState === 'loading') return (
+      <div className="state">
+        <h1 className="hl">LOADING</h1>
+        <div className="skeleton"><i /><i /><i /></div>
+        <p>Reading your orgs from ~/.sfdx…</p>
+      </div>
+    )
+    if (loadState === 'error') return (
+      <div className="state">
+        <h1 className="hl t-production">CAN'T LOAD</h1>
+        <p>{error}</p>
+        <button type="button" className="k" onClick={onRefresh}>Try again <span className="hint">Ctrl R</span></button>
+      </div>
+    )
+    if (visible.length === 0) return query ? (
+      <div className="state">
+        <h1 className="hl">NO MATCH</h1>
+        <p>No org matches “{query}”. Search looks at alias, username, URL and org ID.</p>
+      </div>
+    ) : (
+      <div className="state">
+        <h1 className="hl">NO ORGS</h1>
+        <p>There are no Salesforce logins on this computer yet. Add your first org with your Salesforce username.</p>
+        <button type="button" className="k p" onClick={() => setView('add')}>Add org <span className="hint">Ctrl N</span></button>
+      </div>
+    )
+    return (
+      <>
+        {specimen}
+        <div ref={listRef} className="list dim" role="listbox" aria-label="Orgs">
+          {visible.map((org, idx) => (
+            <OrgItem
+              key={`${org.orgId}-${org.username}`}
+              org={org}
+              index={idx}
+              isSelected={idx === selected}
+              isBusy={removingId === org.orgId}
+              onOpen={() => openOrg(org)}
+              onHover={() => { if (idx !== selected) setSelected(idx) }}
+            />
+          ))}
+        </div>
+      </>
+    )
+  })()
+
+  const addView = (
+    <>
+      <div className="spec">
+        <SpecimenText>ADD ORG</SpecimenText>
+        <div className="sub">Your browser opens the Salesforce login. Come back here when you're done.</div>
+      </div>
+      <div className="view">
+        {(['production', 'sandbox'] as const).map((env, i) => (
+          <button
+            key={env}
+            type="button"
+            className={`choice${loggingIn === env ? ' sel' : ''}`}
+            onClick={() => loginOrg(env)}
+            disabled={!!loggingIn}
+          >
+            <span className="t">{env === 'production' ? 'PRODUCTION' : 'SANDBOX'}</span>
+            <span className="kk"><span className="k">{i + 1}</span></span>
+            <span className="d">
+              <span className={`ribbon b-${env}`}>{env === 'production' ? 'PROD' : 'SBX'}</span>
+              {env === 'production' ? 'login.salesforce.com · also Developer Edition' : 'test.salesforce.com'}
+              {loggingIn === env && ' · waiting for the browser…'}
+            </span>
+            {loggingIn === env && (
+              <span className="progress" aria-hidden>
+                {Array.from({ length: 12 }, (_, j) => <i key={j} className={j < progress ? 'on' : ''} />)}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </>
+  )
+
+  const footer = view === 'list' ? (
+    <div className="foot">
+      <span><kbd><EnterGlyph /></kbd>Open</span>
+      <span><kbd>Ctrl 1-9</kbd>Jump</span>
+      <span><kbd>Ctrl L</kbd>Link</span>
+      <span><kbd>Ctrl E</kbd>Rename</span>
+      <span><kbd>Ctrl D</kbd>Remove</span>
+      <span className="n">{visible.length} org{visible.length === 1 ? '' : 's'}</span>
+    </div>
+  ) : view === 'add' ? (
+    <div className="foot">
+      <span><kbd>1</kbd>Production</span>
+      <span><kbd>2</kbd>Sandbox</span>
+      <span><kbd>Esc</kbd>Back</span>
+      <span className="n">Login waits up to 5 min</span>
+    </div>
+  ) : (
+    <div className="foot">
+      <span><kbd>Esc</kbd>Back</span>
+      <span className="n">SF Org Launcher</span>
+    </div>
+  )
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="animate-fade-in w-[620px] flex flex-col rounded-2xl overflow-hidden
-        border border-surface0 shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
-      style={{ background: 'rgba(30,30,46,0.97)', backdropFilter: 'blur(24px)' }}
-      onKeyDown={handleKeyDown}
-    >
-      {/* ── Search bar ────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-4 py-3.5">
-        <IconSearch />
-        <input
-          ref={inputRef}
-          className="search-input flex-1"
-          type="text"
-          placeholder="Search Salesforce orgs…"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          spellCheck={false}
-          autoComplete="off"
-        />
-        <button
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          title="Refresh orgs (Ctrl+R)"
-          className="text-overlay0 hover:text-blue transition-colors p-1 rounded
-            hover:bg-surface0 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <IconRefresh spinning={isRefreshing} />
-        </button>
-        <button
-          onClick={() => { setShowLogin(s => !s); setShowSettings(false) }}
-          title="Add org"
-          className={`text-overlay0 hover:text-green transition-colors p-1 rounded
-            hover:bg-surface0 ${showLogin ? 'text-green bg-surface0' : ''}`}
-        >
-          <IconPlus />
-        </button>
-        <button
-          onClick={() => { setShowSettings(s => !s); setShowLogin(false) }}
-          title="Settings"
-          className={`text-overlay0 hover:text-blue transition-colors p-1 rounded
-            hover:bg-surface0 ${showSettings ? 'text-blue bg-surface0' : ''}`}
-        >
-          <IconSettings />
-        </button>
-      </div>
-
-      {/* ── Divider ───────────────────────────────────────────────────────── */}
-      <div className="h-px bg-surface0" />
-
-      {/* ── Settings view ─────────────────────────────────────────────────── */}
-      {showSettings ? (
-        <HotkeyRecorder onClose={() => setShowSettings(false)} />
-      ) : showLogin ? (
-        <div className="px-5 py-6 space-y-3">
-          <p className="text-text text-sm font-medium">Add Salesforce Org</p>
-          <p className="text-overlay0 text-xs leading-relaxed">
-            Choose the environment to log in. Your browser will open the Salesforce login page.
-          </p>
-          <div className="flex flex-col gap-2 pt-1">
-            <button
-              onClick={() => loginOrg('https://login.salesforce.com')}
-              disabled={isLoggingIn}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-surface1
-                bg-surface0/50 hover:bg-surface0 transition-colors text-left
-                disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="w-8 h-8 rounded-lg bg-blue/10 border border-blue/25
-                flex items-center justify-center text-blue text-[9px] font-bold">PROD</span>
-              <div>
-                <p className="text-text text-sm font-medium">Production / Developer</p>
-                <p className="text-overlay0 text-[11px]">login.salesforce.com</p>
-              </div>
-            </button>
-            <button
-              onClick={() => loginOrg('https://test.salesforce.com')}
-              disabled={isLoggingIn}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl border border-surface1
-                bg-surface0/50 hover:bg-surface0 transition-colors text-left
-                disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="w-8 h-8 rounded-lg bg-yellow/10 border border-yellow/25
-                flex items-center justify-center text-yellow text-[9px] font-bold">SBX</span>
-              <div>
-                <p className="text-text text-sm font-medium">Sandbox</p>
-                <p className="text-overlay0 text-[11px]">test.salesforce.com</p>
-              </div>
-            </button>
-          </div>
-          {isLoggingIn && (
-            <p className="text-center text-overlay0 text-[11px] pt-2 animate-pulse">
-              Waiting for login in browser…
-            </p>
-          )}
-        </div>
-      ) : (
-      <>
-      {/* ── List ──────────────────────────────────────────────────────────── */}
-      <div
-        ref={listRef}
-        className="overflow-y-auto"
-        style={{ maxHeight: 380 }}
-      >
-
-        {/* Loading skeleton */}
-        {loadState === 'loading' && (
-          <div className="flex flex-col gap-1 p-2">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-3 py-3 rounded-xl">
-                <div className="w-8 h-8 rounded-lg bg-surface0 animate-pulse shrink-0" />
-                <div className="flex flex-col gap-1.5 flex-1">
-                  <div className="h-3 rounded bg-surface0 animate-pulse w-32" />
-                  <div className="h-2.5 rounded bg-surface0 animate-pulse w-48 opacity-60" />
-                </div>
-              </div>
-            ))}
-            <p className="text-center text-overlay0 text-[11px] pb-2 pt-1">
-              Cargando orgs… esto puede tardar hasta un minuto
-            </p>
-          </div>
-        )}
-
-        {/* Error state */}
-        {loadState === 'error' && (
-          <div className="flex items-start gap-3 px-5 py-6 text-sm">
-            <IconAlert />
-            <div>
-              <p className="text-red font-medium mb-1">Could not load orgs</p>
-              <p className="text-subtext0 leading-relaxed whitespace-pre-wrap text-xs">{error}</p>
-              <button
-                onClick={onRefresh}
-                className="mt-3 text-blue text-xs hover:underline"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {loadState === 'ready' && visible.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-overlay0">
-            <IconCloud />
-            <p className="mt-3 text-sm">
-              {query ? `No orgs match "${query}"` : 'No Salesforce orgs found'}
-            </p>
-            {!query && (
-              <p className="text-xs mt-1 text-overlay0/60">
-                Authenticate with <code className="font-mono">sf org login web</code>
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Org list */}
-        {loadState === 'ready' && visible.length > 0 && (
-          <div className="flex flex-col gap-0.5 p-1.5">
-            {visible.map((org, idx) => (
-              <OrgItem
-                key={`${org.orgId}-${org.username}`}
-                org={org}
-                isSelected={idx === selected}
-                isLoading={loadingOrgId === org.orgId}
-                isOpened={openedOrgId === org.orgId}
-                isCopying={copyingOrgId === org.orgId}
-                isCopied={copiedOrgId === org.orgId}
-                isRemoving={removingOrgId === org.orgId}
-                isEditing={editingOrgId === org.orgId}
-                editValue={editingOrgId === org.orgId ? editValue : ''}
-                onOpen={() => openOrg(org)}
-                onCopyLink={() => copyLink(org)}
-                onRemove={() => removeOrg(org)}
-                onRenameStart={() => renameStart(org)}
-                onRenameChange={setEditValue}
-                onRenameSubmit={renameSubmit}
-                onRenameCancel={renameCancel}
-                onHover={() => setSelected(idx)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Footer ────────────────────────────────────────────────────────── */}
-      {loadState === 'ready' && visible.length > 0 && (
-        <>
-          <div className="h-px bg-surface0" />
-          <div className="flex items-center gap-4 flex-wrap px-4 py-2">
-            <KeyHint keys={['↑', '↓']}        desc="Navigate" />
-            <KeyHint keys={['↵']}              desc="Open" />
-            <KeyHint keys={['Ctrl', 'L']}      desc="Copy link" />
-            <KeyHint keys={['Ctrl', 'D']}      desc="Remove" />
-            <KeyHint keys={['Ctrl', 'E']}      desc="Rename" />
-            <KeyHint keys={['Ctrl', 'R']}      desc="Refresh" />
-            <KeyHint keys={['Esc']}            desc="Close" />
-            <span className="ml-auto text-[11px] text-overlay0/50">
-              {visible.length} org{visible.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        </>
-      )}
-
-      {/* ── Toast ─────────────────────────────────────────────────────────── */}
-      {toast && (
-        <div
-          className={`absolute bottom-14 left-1/2 -translate-x-1/2 animate-slide-up
-            px-4 py-2 rounded-xl text-sm font-medium shadow-lg border
-            ${toast.kind === 'ok'
-              ? 'bg-green/15 border-green/30 text-green'
-              : 'bg-red/15 border-red/30 text-red'
-            }`}
-        >
-          {toast.msg}
-        </div>
-      )}
-      </>
-      )}
+    <div ref={panelRef} className="panel" tabIndex={-1} onKeyDown={handleKeyDown} style={{ outline: 'none' }}>
+      {searchBar}
+      {view === 'list' && listView}
+      {view === 'add' && addView}
+      {view === 'settings' && <SettingsView orgCount={orgs.length} onClose={() => setView('list')} />}
+      {footer}
+      {toast && <div className={`toast ${toast.kind}`} role="status">{toast.msg}</div>}
     </div>
   )
 }
